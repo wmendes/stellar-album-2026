@@ -2,9 +2,17 @@ import { useState } from "react";
 import { connect } from "./lib/wallet";
 import { ensureFunded } from "./lib/friendbot";
 import { makeClients } from "./lib/clients";
-import { stickerName, tier, TIER_STYLE } from "./lib/catalog";
+import { stickerName, tier, TIER_STYLE, TYPE_COUNT } from "./lib/catalog";
 
 type Clients = ReturnType<typeof makeClients>;
+
+/** Read the owner's balance of every sticker type (length TYPE_COUNT). */
+async function readCollection(c: Clients, owner: string): Promise<number[]> {
+  const reads = Array.from({ length: TYPE_COUNT }, (_, t) =>
+    c.sticker.balance({ owner, sticker_type: t }).then((r) => Number(r.result)),
+  );
+  return Promise.all(reads);
+}
 
 export default function App() {
   const [address, setAddress] = useState<string>();
@@ -63,9 +71,34 @@ export default function App() {
   const onOpen = () =>
     run("Opening pack", async () => {
       setDrawn(undefined);
+      // Read the drawn stickers from on-chain state (balance diff) rather than
+      // parsing the tx return value — robust across SDK result-parsing quirks,
+      // and authoritative (reflects what was actually minted).
+      const before = await readCollection(clients!, address!);
       const tx = await clients!.pack.open({ opener: address! });
-      const { result } = await tx.signAndSend();
-      setDrawn((result as number[]).map(Number));
+      const sent = await tx.signAndSend();
+
+      // signAndSend does NOT throw on an on-chain failure unless you read
+      // .result — so check the status explicitly and surface diagnostics.
+      const resp = sent.getTransactionResponse as unknown as {
+        status?: string;
+        resultXdr?: unknown;
+        diagnosticEventsXdr?: unknown;
+      };
+      console.log("open tx status:", resp?.status, resp);
+      if (resp?.status && resp.status !== "SUCCESS") {
+        throw new Error(`open reverted on-chain (status=${resp.status}); see console for diagnostics`);
+      }
+
+      const after = await readCollection(clients!, address!);
+      const drawn: number[] = [];
+      for (let t = 0; t < TYPE_COUNT; t++) {
+        for (let k = 0; k < after[t] - before[t]; k++) drawn.push(t);
+      }
+      if (drawn.length === 0) {
+        throw new Error("open succeeded but no new stickers were detected — see console tx log");
+      }
+      setDrawn(drawn);
       await refresh(clients!, address!);
     });
 

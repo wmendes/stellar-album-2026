@@ -105,6 +105,21 @@ ADR-style record of the decisions made while designing `stellar-album`, and *why
 
 ---
 
+## D22 — Pack draw is deterministic (seeded), not network-random
+**Decision:** `Pack.open` seeds the PRNG from a per-opener nonce (`sha256(nonce)`) and increments the nonce each open, instead of using the raw network PRNG.
+**Why (a real bug found on testnet):** `open` uses the draw to choose *which* sticker storage keys to write. Soroban derives a transaction's storage footprint from **simulation**; the raw `env.prng()` produces a *different* draw at execution than at simulation, so execution writes keys absent from the simulated footprint and the tx **traps** (`InvokeHostFunction(Trapped)`) — every open failed. Seeding from stable on-chain state makes the draw identical in simulation and execution, so the footprint matches.
+**Trade-off:** draws are now predictable, and (since the seed is nonce-only) every opener's *n*-th pack draws the same types. Acceptable for a teaching demo — and a natural hook for the commit-reveal lesson. Proper unpredictable randomness (e.g. commit-reveal, or drawing at mint time into a per-pack record) is future work. Mirrors Tyler's original "deterministic-at-mint" caution.
+
+## D23 — Frontend integration fixes (testnet bring-up)
+**Decisions made while getting the v1 app running on testnet:**
+- `@stellar/stellar-sdk` pinned to **15.x** (not 13.x): the contracts use protocol-23 types (`ScSpecTypeMuxedAddress`, value 20, from Coin's `transfer`); older SDKs can't parse the spec.
+- Vite `define: { global: "globalThis" }` — stellar-wallets-kit bundles wallet modules that reference Node's `global`.
+- Contract clients import the generated **source** (`../contracts/<name>/src/index.ts`); the bindings' package `exports` points at an unbuilt `./dist`.
+- The pack reveal reads drawn stickers from **on-chain balance diff** (before/after `open`), not the tx return value — robust across SDK result-parsing, and authoritative.
+- `bootstrap.sh` reuses an existing funded deployer key (idempotent) and quotes the network passphrase in `.env.local`.
+
+---
+
 ## Open questions (not yet decided)
 
 - **Class 3 density.** Pack + Album + the randomness module is a lot for one class. Keep together (strongest hook) or split the re-roll attack into an optional lab?

@@ -28,8 +28,10 @@ stellar network add "$NETWORK" \
   --rpc-url "$RPC_URL" \
   --network-passphrase "$PASSPHRASE" 2>/dev/null || true
 
-say "Generating + funding deployer key (admin/treasury)"
-stellar keys generate deployer --network "$NETWORK" --fund --overwrite
+say "Ensuring deployer key (admin/treasury) exists + funded"
+if ! stellar keys address deployer >/dev/null 2>&1; then
+  stellar keys generate deployer --network "$NETWORK" --fund
+fi
 DEPLOYER=$(stellar keys address deployer)
 echo "deployer: $DEPLOYER"
 

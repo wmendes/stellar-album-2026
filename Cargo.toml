@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = ["contracts/*", "tests"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/stellar/stellar-album"
+
+[workspace.dependencies]
+soroban-sdk = "26.1.0"
+# OpenZeppelin Soroban token libraries are added in later phases:
+#   - stellar-fungible      → Coin    (Phase 1)
+#   - stellar-non-fungible  → Album   (Phase 6)
+# Sticker is a hand-rolled multi-token (no OZ equivalent — see docs/decisions.md D8).
+
+# Tuned for small, safe Soroban wasm. overflow-checks ON on purpose: arithmetic
+# bugs in token math should trap, not wrap.
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true

@@ -1,0 +1,17 @@
+[package]
+name = "tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+doctest = false
+
+# Integration tests across contracts. Each `reproduce_class_N` test is the
+# headline demo for a class branch (see docs/curriculum/). Contract crates are
+# added as path dependencies as they land in later phases.
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+test-utils = { path = "../contracts/test-utils" }
+common = { path = "../contracts/common" }

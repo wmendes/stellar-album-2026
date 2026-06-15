@@ -1,0 +1,15 @@
+[package]
+name = "test-utils"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["rlib"]
+doctest = false
+
+# Dev-only helper crate: it enables soroban-sdk's `testutils` and is intended to
+# be used only from `[dev-dependencies]` / the `tests` crate. It does not compile
+# to wasm and is never linked into a deployed contract.
+[dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

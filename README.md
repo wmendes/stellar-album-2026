@@ -73,4 +73,4 @@ Then follow [`docs/bootstrap-and-deploy.md`](docs/bootstrap-and-deploy.md) and t
 
 ## Status
 
-**Phase 0 — scaffolding.** See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).
+**Phase 0 — scaffolding ✅ complete.** Next: Phase 1 (Coin). See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).

@@ -12,7 +12,7 @@ How `stellar-album` gets built: in **dependency order**, in **testable pieces**,
 
 | Phase | Contract(s) | Effort | Branch | Tag | Status |
 |---|---|---|---|---|---|
-| 0 | Scaffolding (workspace, `test-utils`, CI) | — | — | — | ⬜ |
+| 0 | Scaffolding (workspace, `common`, `test-utils`, CI) | — | — | — | ✅ |
 | 1 | Coin (OZ `fungible`) | Low | `class-1-coin-faucet` | `v0.1-fungible` | ⬜ |
 | 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ⬜ |
 | 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ⬜ |
@@ -30,12 +30,16 @@ Status legend: ⬜ todo · 🔵 in progress · ✅ done. **The Status column is 
 ## Per-phase detail
 
 ### Phase 0 — Scaffolding
-- **Builds:** Cargo workspace (`[workspace] members = ["contracts/*", "tests"]`); a `[workspace.dependencies]` block pinning `soroban-sdk` and the OZ crates (compatible versions, pinned now); a dev-only `contracts/test-utils` crate exposing `setup() -> Env` (with `mock_all_auths`) and the shared **`extend_ttl` TTL convention** + threshold consts; CI running `fmt` / `clippy -D warnings` / `test --workspace` / `build --target wasm32-unknown-unknown --release`.
-- **Tests that prove it:** `cargo test --workspace` runs (zero real tests OK) and the wasm target compiles.
+- **Builds:** Cargo workspace (`[workspace] members = ["contracts/*", "tests"]`, resolver 2); a `[workspace.dependencies]` block pinning `soroban-sdk = "26.1.0"` (OZ crates added in Phase 1/6); a wasm-safe `contracts/common` crate holding the **TTL convention** (`extend_persistent` / `extend_instance` + threshold consts); a dev-only `contracts/test-utils` crate exposing `setup() -> Env` (with `mock_all_auths`); a `tests` integration crate; `rust-toolchain.toml` pinning 1.95.0 + `wasm32v1-none`; CI (`.github/workflows/ci.yml`) running `fmt --check` / `clippy -D warnings` / `test --workspace` / `stellar contract build`; a `Makefile` mirroring the gate.
+- **Tests that prove it:** `cargo test --workspace` runs (Phase 0 ships one scaffold smoke test) and `stellar contract build` succeeds.
 - **Authority edges tested:** none yet.
-- **Exit criteria:** empty workspace builds to wasm; CI green on a trivial commit.
+- **Exit criteria:** workspace builds; the wasm pipeline (`stellar contract build`) succeeds; local gate green.
 - **Definition of Done:** see [DoD](#definition-of-done).
 - **Ships as:** — (foundation; lands on `class-1-coin-faucet`).
+
+> **Refinement during build:** the TTL helper was split into a wasm-safe `contracts/common` crate (runtime code) separate from the dev-only `contracts/test-utils` (test setup) — TTL extension is contract runtime code and can't live in a `testutils`-gated crate. Target is `wasm32v1-none` (modern Soroban), not the legacy `wasm32-unknown-unknown`.
+
+**Status: ✅ done.** Local gate verified green: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (1 test), `stellar contract build` (exit 0).
 
 ### Phase 1 — Coin (OZ `fungible` Base + Mintable)
 - **Builds:** Coin wrapping OZ `fungible` Base + Mintable; constructor sets metadata + a settable `minter` address; `mint` gated to the minter.

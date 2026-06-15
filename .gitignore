@@ -1,0 +1,15 @@
+# Rust / Cargo build output
+/target
+**/target
+
+# Soroban / Stellar CLI local state
+.stellar/
+
+# Built wasm artifacts (built on demand via `stellar contract build`)
+*.wasm
+
+# OS / editor noise
+.DS_Store
+*.swp
+
+# Note: Cargo.lock IS committed (contract builds should be reproducible).

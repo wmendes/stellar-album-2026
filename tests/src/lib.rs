@@ -16,3 +16,6 @@ mod scaffold {
         let _ = env.ledger().timestamp();
     }
 }
+
+#[cfg(test)]
+mod class_1;

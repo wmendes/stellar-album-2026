@@ -14,7 +14,7 @@ How `stellar-album` gets built: in **dependency order**, in **testable pieces**,
 |---|---|---|---|---|---|
 | 0 | Scaffolding (workspace, `common`, `test-utils`, CI) | — | — | — | ✅ |
 | 1 | Coin (OZ `fungible`) | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
-| 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ⬜ |
+| 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
 | 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ⬜ |
 | 4 | Pack (randomness) | **Highest** | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
 | 5 | Store | Med | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
@@ -58,6 +58,10 @@ Status legend: ⬜ todo · 🔵 in progress · ✅ done. **The Status column is 
 - **Authority edges tested:** **Faucet→Coin** (the first and simplest edge — establishes the cross-contract auth harness early).
 - **Exit criteria:** claim mints; cooldown enforced both directions; time-travel test green.
 - **Ships as:** `class-1-coin-faucet` / `v0.1-fungible`.
+
+> **Build notes:** First claim grants the onboarding seed (1000); later claims grant the drip (100) gated by a constructor cooldown. The Faucet→Coin edge is verified by `reproduce_class_1` (deploy both → `set_minter` → claim seed → early re-claim rejected → drip after cooldown). Cross-contract call uses a **local `#[contractclient]` interface** for Coin — depending on the `coin` cdylib crate normally collides on the `__constructor` wasm symbol, so `coin` is a *dev*-dependency only.
+
+**Status: ✅ done — Class 1 complete.** Gate green: 3 Faucet unit tests + `reproduce_class_1` integration test, `clippy -D warnings`, `stellar contract build` (Coin + Faucet wasm). The `class-1-coin-faucet` branch + `v0.1-fungible` tag are cut at this point.
 
 ### Phase 3 — Sticker (hand-rolled semi-fungible multi-token) — HIGH EFFORT
 - **Builds:** `Map<(Address,u32),i128>` balances + per-type supply; `mint`/`burn`/`transfer`/`balance_of`/`supply`; settable `minter` + `burner` addresses; 20 types + rarity weights as `const` data. First contract with non-trivial persistent storage → **TTL convention applied here**.

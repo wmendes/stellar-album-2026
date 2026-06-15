@@ -73,4 +73,4 @@ Then follow [`docs/bootstrap-and-deploy.md`](docs/bootstrap-and-deploy.md) and t
 
 ## Status
 
-**Phase 0 — scaffolding ✅ complete.** Next: Phase 1 (Coin). See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).
+**Class 1 complete ✅** (Coin + Faucet — Phases 0–2; tag `v0.1-fungible`). Next: Phase 3 (Sticker), `class-2-stickers`. See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).

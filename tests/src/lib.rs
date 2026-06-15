@@ -19,3 +19,6 @@ mod scaffold {
 
 #[cfg(test)]
 mod class_1;
+
+#[cfg(test)]
+mod class_2;

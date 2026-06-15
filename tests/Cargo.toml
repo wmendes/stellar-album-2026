@@ -17,3 +17,4 @@ test-utils = { path = "../contracts/test-utils" }
 common = { path = "../contracts/common" }
 coin = { path = "../contracts/coin" }
 faucet = { path = "../contracts/faucet" }
+sticker = { path = "../contracts/sticker" }

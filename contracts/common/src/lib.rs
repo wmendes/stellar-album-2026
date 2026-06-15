@@ -41,3 +41,49 @@ pub fn extend_instance(env: &Env) {
         .instance()
         .extend_ttl(INSTANCE_THRESHOLD, INSTANCE_EXTEND_TO);
 }
+
+// ---------------------------------------------------------------------------
+// Sticker catalog
+//
+// The 20 SDF-professional sticker types and their rarity. Lives here (not in a
+// contract) so both Sticker (Phase 3, validation) and Pack (Phase 4, weighted
+// draw) can use it without depending on each other's cdylib.
+// ---------------------------------------------------------------------------
+
+/// Number of distinct sticker types. Valid `type_id`s are `0..TYPE_COUNT`.
+pub const TYPE_COUNT: u32 = 20;
+
+/// Rarity tier of a sticker type.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Tier {
+    Common,
+    Rare,
+    Legendary,
+}
+
+/// Tier of a type id. Layout: 0–11 common, 12–17 rare, 18–19 legendary.
+pub fn tier(type_id: u32) -> Tier {
+    match type_id {
+        0..=11 => Tier::Common,
+        12..=17 => Tier::Rare,
+        _ => Tier::Legendary,
+    }
+}
+
+/// Draw weight of a type id. Per-type weights chosen so the tier totals are
+/// 70 / 25 / 5 (common / rare / legendary): 12×70 + 6×50 + 2×30 = 1200.
+pub fn weight(type_id: u32) -> u32 {
+    match tier(type_id) {
+        Tier::Common => 70,
+        Tier::Rare => 50,
+        Tier::Legendary => 30,
+    }
+}
+
+/// Sum of all type weights — the range a pack draw rolls within.
+pub const TOTAL_WEIGHT: u32 = 1200;
+
+/// Whether a type id refers to a real sticker.
+pub fn is_valid_type(type_id: u32) -> bool {
+    type_id < TYPE_COUNT
+}

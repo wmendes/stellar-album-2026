@@ -1645,6 +1645,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sticker"
+version = "0.0.0"
+dependencies = [
+ "common",
+ "soroban-sdk",
+ "test-utils",
+]
+
+[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1682,6 +1691,7 @@ dependencies = [
  "common",
  "faucet",
  "soroban-sdk",
+ "sticker",
  "test-utils",
 ]
 

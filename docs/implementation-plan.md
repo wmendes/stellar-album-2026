@@ -15,7 +15,7 @@ How `stellar-album` gets built: in **dependency order**, in **testable pieces**,
 | 0 | Scaffolding (workspace, `common`, `test-utils`, CI) | — | — | — | ✅ |
 | 1 | Coin (OZ `fungible`) | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
 | 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
-| 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ⬜ |
+| 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ✅ |
 | 4 | Pack (randomness) | **Highest** | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
 | 5 | Store | Med | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
 | 6 | Album (soulbound) | Med | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
@@ -69,6 +69,10 @@ Status legend: ⬜ todo · 🔵 in progress · ✅ done. **The Status column is 
 - **Authority edges tested:** none new yet (minter/burner are test addresses until Pack/Album exist).
 - **Exit criteria:** full SFT semantics proven; only intended panics.
 - **Ships as:** `class-2-stickers` / `v0.2-semifungible`.
+
+> **Build notes:** Balances live at `DataKey::Balance(Address, u32)` with per-type `Supply`. Auth: `mint`→minter, `burn`→burner, `transfer`→`from` (the Escrow path). The 20-type rarity catalog (`TYPE_COUNT`, `Tier`, `tier`, `weight`, `TOTAL_WEIGHT` = 1200) lives in `common` so Pack (Phase 4) can reuse it without a cdylib dependency. Per-type weights 70/50/30 give tier totals 70/25/5.
+
+**Status: ✅ done — Class 2 complete.** Gate green: 10 Sticker unit tests + `reproduce_class_2`, `clippy -D warnings`, `stellar contract build`. `class-2-stickers` + `v0.2-semifungible` cut at this point.
 
 ### Phase 4 — Pack (NFT; open → prng → cross-mint Stickers) — HIGHEST EFFORT
 - **Builds:** Pack NFT; `open(owner)` burns the pack, rolls 3 sticker types via weighted `env.prng()` (repeats allowed), cross-calls `Sticker::mint` 3×. Includes a direct-mint path so the Class-3 demo doesn't need Store (see [D14](decisions.md)).

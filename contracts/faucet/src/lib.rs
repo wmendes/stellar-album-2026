@@ -91,6 +91,15 @@ impl Faucet {
     pub fn drip(e: &Env) -> i128 {
         e.storage().instance().get(&DataKey::Drip).unwrap()
     }
+
+    /// Unix timestamp of `claimer`'s last claim (0 if never claimed). The UI
+    /// uses this + `cooldown` to show when the next claim is available.
+    pub fn last_claim(e: &Env, claimer: Address) -> u64 {
+        e.storage()
+            .persistent()
+            .get(&DataKey::LastClaim(claimer))
+            .unwrap_or(0)
+    }
 }
 
 #[cfg(test)]

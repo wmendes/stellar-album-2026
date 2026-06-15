@@ -6,6 +6,14 @@ import { stickerName, tier, TIER_STYLE, TYPE_COUNT } from "./lib/catalog";
 
 type Clients = ReturnType<typeof makeClients>;
 
+function fmtRemaining(sec: number): string {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m`;
+  return `${Math.max(1, Math.floor(sec))}s`;
+}
+
 /** Read the owner's balance of every sticker type (length TYPE_COUNT). */
 async function readCollection(c: Clients, owner: string): Promise<number[]> {
   const reads = Array.from({ length: TYPE_COUNT }, (_, t) =>
@@ -19,17 +27,27 @@ export default function App() {
   const [clients, setClients] = useState<Clients>();
   const [coin, setCoin] = useState<number>(0);
   const [packs, setPacks] = useState<number>(0);
+  const [collection, setCollection] = useState<number[]>([]);
   const [drawn, setDrawn] = useState<number[]>();
+  const [claimAt, setClaimAt] = useState<number>(0); // unix sec the next claim is allowed (0 = now)
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<string>();
 
   const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
+  const now = Date.now() / 1000;
+  const claimReady = claimAt === 0 || now >= claimAt;
 
-  async function refresh(c: Clients, addr: string) {
+  async function refresh(c: Clients, addr: string): Promise<number[]> {
     const bal = await c.coin.balance({ account: addr });
     setCoin(Number(bal.result));
     const p = await c.pack.balance({ owner: addr });
     setPacks(Number(p.result));
+    const last = Number((await c.faucet.last_claim({ claimer: addr })).result);
+    const cd = Number((await c.faucet.cooldown()).result);
+    setClaimAt(last === 0 ? 0 : last + cd);
+    const coll = await readCollection(c, addr);
+    setCollection(coll);
+    return coll;
   }
 
   async function run<T>(label: string, fn: () => Promise<T>) {
@@ -90,7 +108,7 @@ export default function App() {
         throw new Error(`open reverted on-chain (status=${resp.status}); see console for diagnostics`);
       }
 
-      const after = await readCollection(clients!, address!);
+      const after = await refresh(clients!, address!);
       const drawn: number[] = [];
       for (let t = 0; t < TYPE_COUNT; t++) {
         for (let k = 0; k < after[t] - before[t]; k++) drawn.push(t);
@@ -99,7 +117,6 @@ export default function App() {
         throw new Error("open succeeded but no new stickers were detected — see console tx log");
       }
       setDrawn(drawn);
-      await refresh(clients!, address!);
     });
 
   return (
@@ -134,7 +151,12 @@ export default function App() {
 
         {address && (
           <section className="grid grid-cols-3 gap-3">
-            <Action label="Claim coins" hint="from the Faucet" onClick={onClaim} disabled={!!busy} />
+            <Action
+              label="Claim coins"
+              hint={claimReady ? "from the Faucet" : `next in ${fmtRemaining(claimAt - now)}`}
+              onClick={onClaim}
+              disabled={!!busy || !claimReady}
+            />
             <Action
               label="Buy pack"
               hint="100 ⭐"
@@ -167,6 +189,28 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {address && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+                Your collection
+              </h2>
+              <span className="text-sm text-slate-500">
+                {collection.filter((n) => n > 0).length}/{TYPE_COUNT} types
+              </span>
+            </div>
+            {collection.every((n) => n === 0) ? (
+              <p className="text-center text-slate-400">No stickers yet — open a pack!</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-3 sm:grid-cols-5">
+                {collection.map((n, t) =>
+                  n > 0 ? <Sticker key={t} typeId={t} qty={n} /> : null,
+                )}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
@@ -196,12 +240,19 @@ function Action({
 }
 
 // Non-fungible-ish: an identifiable object with a name + rarity, not a number.
-function Sticker({ typeId }: { typeId: number }) {
+// `qty` (when shown in the collection) is the count of this type held — the
+// semi-fungible part: duplicates of one type stack.
+function Sticker({ typeId, qty }: { typeId: number; qty?: number }) {
   const t = tier(typeId);
   return (
     <div
-      className={`flex aspect-[3/4] flex-col items-center justify-center rounded-xl bg-gradient-to-b ring-2 ${TIER_STYLE[t]}`}
+      className={`relative flex aspect-[3/4] flex-col items-center justify-center rounded-xl bg-gradient-to-b ring-2 ${TIER_STYLE[t]}`}
     >
+      {qty != null && qty > 1 && (
+        <span className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white">
+          ×{qty}
+        </span>
+      )}
       <div className="text-3xl">🧑‍🚀</div>
       <div className="mt-2 text-sm font-bold">{stickerName(typeId)}</div>
       <div className="text-xs uppercase tracking-wide opacity-80">{t}</div>

@@ -15,7 +15,7 @@ ENV_OUT="frontend/.env.local"
 
 # Demo economy (raw token units; Coin metadata decimals are cosmetic and the
 # UI renders these counts directly).
-COOLDOWN=60
+COOLDOWN=10800 # 3 hours (campaign pace). Use 60 for live-class testing.
 SEED=1000
 DRIP=100
 PRICE=100

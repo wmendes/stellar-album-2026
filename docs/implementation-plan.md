@@ -16,7 +16,7 @@ How `stellar-album` gets built: in **dependency order**, in **testable pieces**,
 | 1 | Coin (OZ `fungible`) | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
 | 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
 | 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ✅ |
-| 4 | Pack (randomness) | **Highest** | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
+| 4 | Pack (randomness) | **Highest** | `class-3-packs-album` | `v0.3-collectibles` | ✅ |
 | 5 | Store | Med | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
 | 6 | Album (soulbound) | Med | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
 | 7 | Escrow | **High** | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
@@ -80,6 +80,10 @@ Status legend: ⬜ todo · 🔵 in progress · ✅ done. **The Status column is 
 - **Authority edges tested:** **Pack→Sticker** (mint).
 - **Exit criteria:** open burns pack + mints exactly 3 stickers per seeded roll; weight buckets verified.
 - **Ships as:** `class-3-packs-album` / `v0.3-collectibles`.
+
+> **Build notes:** Sealed packs are modelled as a **fungible count per owner** (decision D16) — that *is* "sealed packs are interchangeable", and makes `open()` the literal fungible→unique collapse. The weight→type mapping is a pure `common::type_for_roll`, unit-tested deterministically in `common` (4 tests) apart from the PRNG; Pack feeds it `prng().gen_range` (the non-deprecated API). Pack→Sticker mint goes through a local `#[contractclient]` (`StickerMint`), with `sticker` as a dev-dependency only.
+
+**Status: ✅ done.** Gate green: 4 Pack tests + 4 `common` rarity tests, `clippy -D warnings`, `stellar contract build`. Class 3 is **not** complete yet — it also needs Album (Phase 6), which is when `class-3-packs-album` / `v0.3-collectibles` is cut.
 
 ### Phase 5 — Store (sells Pack for Coin)
 - **Builds:** `buy_pack(buyer)` pulls 100 Coin and cross-mints a Pack.

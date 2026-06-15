@@ -73,4 +73,4 @@ Then follow [`docs/bootstrap-and-deploy.md`](docs/bootstrap-and-deploy.md) and t
 
 ## Status
 
-**Class 2 complete ✅** (through Sticker — Phases 0–3; tag `v0.2-semifungible`). Next: Phase 4 (Pack), `class-3-packs-album`. See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).
+**Phases 0–4 done ✅** (Coin, Faucet, Sticker, Pack). Next: Phase 5 (Store), then Phase 6 (Album) completes Class 3 (`class-3-packs-album` / `v0.3-collectibles`). See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the live phase status and test gates; open questions are tracked at the bottom of [`docs/decisions.md`](docs/decisions.md).

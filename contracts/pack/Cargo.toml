@@ -1,0 +1,20 @@
+[package]
+name = "pack"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+common = { path = "../common" }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+test-utils = { path = "../test-utils" }
+# Real Sticker for tests only (cross-contract calls use the local StickerMint
+# client interface to avoid a cdylib symbol collision).
+sticker = { path = "../sticker" }

@@ -75,6 +75,12 @@ ADR-style record of the decisions made while designing `stellar-album`, and *why
 
 ---
 
+## D16 — Sealed packs are a fungible count, not per-id NFTs
+**Decision:** A holder owns a *count* of sealed packs (`Balance(Address) -> i128`), not individually-numbered NFT tokens. `open()` decrements the count by one and mints 3 stickers.
+**Why:** The spectrum framing already says a sealed pack is *fungible until opened* — every sealed pack of the series is interchangeable. Modelling them as a fungible count makes that literally true, and makes `open()` the fungible→unique **collapse** in one call, which is the Class 3 teaching hook. Per-id NFTs would add provenance the design doesn't use (the Album carries uniqueness, not the pack). This refines the earlier "Pack = NFT" wording in architecture.md.
+
+---
+
 ## Open questions (not yet decided)
 
 - **Class 3 density.** Pack + Album + the randomness module is a lot for one class. Keep together (strongest hook) or split the re-roll attack into an optional lab?

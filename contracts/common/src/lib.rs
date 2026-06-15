@@ -87,3 +87,55 @@ pub const TOTAL_WEIGHT: u32 = 1200;
 pub fn is_valid_type(type_id: u32) -> bool {
     type_id < TYPE_COUNT
 }
+
+/// Map a draw roll in `0..TOTAL_WEIGHT` to a sticker type via cumulative
+/// weights. Pure (no PRNG) so the rarity table can be tested deterministically,
+/// separately from the randomness source. Pack feeds it `prng().u64_in_range`.
+pub fn type_for_roll(roll: u64) -> u32 {
+    let mut acc: u64 = 0;
+    let mut t: u32 = 0;
+    while t < TYPE_COUNT {
+        acc += weight(t) as u64;
+        if roll < acc {
+            return t;
+        }
+        t += 1;
+    }
+    TYPE_COUNT - 1
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn weights_sum_to_total() {
+        let sum: u32 = (0..TYPE_COUNT).map(weight).sum();
+        assert_eq!(sum, TOTAL_WEIGHT);
+    }
+
+    #[test]
+    fn roll_boundaries_map_to_expected_types() {
+        assert_eq!(type_for_roll(0), 0); // first common
+        assert_eq!(type_for_roll(69), 0); // end of first common's band
+        assert_eq!(type_for_roll(70), 1); // second common
+        assert_eq!(type_for_roll(840), 12); // first rare
+        assert_eq!(type_for_roll(1140), 18); // first legendary
+        assert_eq!(type_for_roll(TOTAL_WEIGHT as u64 - 1), 19); // last legendary
+    }
+
+    #[test]
+    fn every_roll_yields_a_valid_type() {
+        for roll in 0..TOTAL_WEIGHT as u64 {
+            assert!(is_valid_type(type_for_roll(roll)));
+        }
+    }
+
+    #[test]
+    fn tiers_are_laid_out_as_documented() {
+        assert_eq!(tier(11), Tier::Common);
+        assert_eq!(tier(12), Tier::Rare);
+        assert_eq!(tier(17), Tier::Rare);
+        assert_eq!(tier(18), Tier::Legendary);
+    }
+}

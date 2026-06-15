@@ -57,7 +57,7 @@ Public surface:
 20 sticker types, each with a rarity tier (see [economy-and-rarity.md](economy-and-rarity.md)). A duplicate is simply `balance > 1` for a given `type_id`.
 
 ### Pack
-An NFT representing a sealed pack.
+A holding of sealed packs. Sealed packs are interchangeable, so an owner holds a **fungible count** of them (`Balance(Address)`), not numbered NFTs — see [decision D16](decisions.md). Opening one collapses that fungibility into unique stickers.
 - `open(owner)` is the centerpiece: it **burns** the pack, draws 3 results with `env.prng()` (repetition within a pack is allowed), and performs a **cross-contract call** to `Sticker.mint` three times.
 - The Pack contract must be the **configured minter** of Sticker.
 - **Randomness caveat (taught, not hidden):** `env.prng()` is **grindable** — a user can simulate the open transaction, see the outcome, and only submit when the draw is good (a free re-roll). This is acceptable for a testnet demo and is turned into explicit course content (the attack + mitigations). See [Class 3](curriculum/class-3-pack-album.md) and [decisions](decisions.md).

@@ -17,7 +17,7 @@ How `stellar-album` gets built: in **dependency order**, in **testable pieces**,
 | 2 | Faucet | Low | `class-1-coin-faucet` | `v0.1-fungible` | ✅ |
 | 3 | Sticker (semi-fungible) | **High** | `class-2-stickers` | `v0.2-semifungible` | ✅ |
 | 4 | Pack (randomness) | **Highest** | `class-3-packs-album` | `v0.3-collectibles` | ✅ |
-| 5 | Store | Med | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
+| 5 | Store | Med | `class-4-store-escrow` | `v0.4-marketplace` | ✅ |
 | 6 | Album (soulbound) | Med | `class-3-packs-album` | `v0.3-collectibles` | ⬜ |
 | 7 | Escrow | **High** | `class-4-store-escrow` | `v0.4-marketplace` | ⬜ |
 
@@ -91,6 +91,10 @@ Status legend: ⬜ todo · 🔵 in progress · ✅ done. **The Status column is 
 - **Authority edges tested:** **Store→Pack** (mint) and the Coin transfer-in.
 - **Exit criteria:** full "earn Coin → buy Pack" path green in one integration test.
 - **Ships as:** `class-4-store-escrow` / `v0.4-marketplace`.
+
+> **Build notes:** `buy_pack(buyer)` pulls `price` Coin to a configured treasury (Coin `transfer`, whose recipient is a `MuxedAddress` per the OZ trait — `Address` converts via `.into()`) and mints one pack (Store → Pack edge). Both Coin and Pack are reached through local `#[contractclient]` interfaces (`CoinPay`, `PackMint`); they're dev-dependencies only.
+
+**Status: ✅ done.** Gate green: 2 Store tests (buy debits Coin + mints pack to buyer/treasury; underfunded buy traps), `clippy -D warnings`, `stellar contract build`. Class 4 completes at Phase 7 (Escrow).
 
 ### Phase 6 — Album (soulbound NFT, paste = burn)
 - **Builds:** OZ `non-fungible` with **transfer overridden to panic** (soulbound); `paste(owner, type)` burns 1 sticker + marks the slot; irreversible (re-paste of a filled slot panics).

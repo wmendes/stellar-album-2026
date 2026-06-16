@@ -2,14 +2,19 @@ import {
   StellarWalletsKit,
   WalletNetwork,
   FREIGHTER_ID,
-  FreighterModule,
+  allowAllModules,
 } from "@creit.tech/stellar-wallets-kit";
 import { NETWORK_PASSPHRASE } from "./network";
 
+// Register every no-config browser/web wallet the kit ships (Freighter, xBull,
+// Albedo, Rabet, Lobstr, Hana, HOT, Klever) so the picker isn't Freighter-only.
+// Freighter stays the default highlight; the modal lets the user pick any.
+// (Ledger / Trezor / WalletConnect are intentionally excluded — they need extra
+// peer deps and a WalletConnect projectId.)
 export const kit = new StellarWalletsKit({
   network: WalletNetwork.TESTNET,
   selectedWalletId: FREIGHTER_ID,
-  modules: [new FreighterModule()],
+  modules: allowAllModules(),
 });
 
 /** Open the wallet picker and return the selected account address. */

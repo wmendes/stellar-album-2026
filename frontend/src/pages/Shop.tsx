@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store";
 import { Page, CounterButton, Toast } from "../components/ui";
 import { PackReveal } from "../components/PackReveal";
+import { Confetti } from "../components/Confetti";
 
 function fmtRemaining(sec: number): string {
   const h = Math.floor(sec / 3600);
@@ -14,13 +16,11 @@ function fmtRemaining(sec: number): string {
 }
 
 export default function Shop() {
-  const { coin, packs, claimAt, busy, error, claim, buy, open, reveal, opening, dismissReveal, clearError } = useStore();
+  const { coin, packs, claimAt, busy, error, claim, buy, open, reveal, opening, dismissReveal, clearError, packBought, dismissPackBought } = useStore();
   const navigate = useNavigate();
   const now = Date.now() / 1000;
   const claimReady = claimAt === 0 || now >= claimAt;
 
-  // Tick once a second while the faucet is cooling down so the countdown is live
-  // and the Claim button re-enables itself the moment it expires.
   const [, setTick] = useState(0);
   useEffect(() => {
     if (claimReady) return;
@@ -69,6 +69,49 @@ export default function Shop() {
       </div>
 
       <Toast busy={busy} error={error} onDismiss={clearError} />
+
+      {/* Pack bought celebration */}
+      <AnimatePresence>
+        {packBought && (
+          <>
+            <Confetti onDone={() => {}} />
+            <motion.div
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-ink/60 px-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={dismissPackBought}
+            >
+              <motion.div
+                className="flex flex-col items-center gap-4 rounded-3xl bg-paper px-10 py-8 shadow-xl"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <motion.div
+                  className="text-6xl"
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  📦
+                </motion.div>
+                <p className="font-display text-2xl font-extrabold text-ink">Pack acquired!</p>
+                <p className="text-sm text-ink-soft">You now have <span className="font-bold text-leaf-deep">{packs} pack{packs !== 1 ? "s" : ""}</span> ready to rip.</p>
+                <button
+                  onClick={dismissPackBought}
+                  className="mt-1 rounded-full bg-leaf-deep px-6 py-2.5 font-display font-bold text-paper shadow-md transition hover:bg-leaf"
+                >
+                  Rip it open!
+                </button>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {(opening || reveal) && (
         <PackReveal

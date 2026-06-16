@@ -74,6 +74,23 @@ fn burn_reduces_balance_and_supply() {
     assert_eq!(sticker.supply(&CEO), 1);
 }
 
+/// A self-transfer must be a no-op: reading `from` and `to` balances before
+/// writing either means `from == to` would otherwise double the holding while
+/// leaving `Supply` untouched — unlimited free minting. See issue #1.
+#[test]
+fn self_transfer_does_not_inflate_balance() {
+    let e = test_utils::setup();
+    let admin = Address::generate(&e);
+    let alice = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    sticker.mint(&alice, &CEO, &3);
+    sticker.transfer(&alice, &alice, &CEO, &3); // self-transfer
+
+    assert_eq!(sticker.balance(&alice, &CEO), 3, "self-transfer inflated balance");
+    assert_eq!(sticker.supply(&CEO), 3); // supply untouched, invariant holds
+}
+
 #[test]
 #[should_panic(expected = "insufficient balance")]
 fn transfer_more_than_held_traps() {

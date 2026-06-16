@@ -105,6 +105,9 @@ impl Sticker {
         if from_bal < amount {
             panic!("sticker: insufficient balance");
         }
+        if from == to {
+            return; // moving to self is a no-op — balances and supply unchanged
+        }
         let to_bal = Self::balance(e, to.clone(), sticker_type);
         set_balance(e, &from, sticker_type, from_bal - amount);
         set_balance(e, &to, sticker_type, to_bal + amount);

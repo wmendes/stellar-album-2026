@@ -30,9 +30,8 @@ export const TIER_GLYPH: Record<Tier, string> = {
   Legendary: "✦",
 };
 
-// Who / what is on each image, by image index (frontend/images/00..17).
-// In the order provided; verify against the per-image descriptions.
-// (The 19th list entry, "Stellar Village", has no image.)
+// Who / what is on each sticker, by position in the sorted image list
+// (frontend/images, 19 files). Order matches the 19 names provided.
 export const NAMES = [
   "Nicole Adair",
   "Daniela Henao",
@@ -52,6 +51,7 @@ export const NAMES = [
   "Danelle Dixon",
   "Bastian Koh",
   "Meridian 2026",
+  "Stellar Village",
 ];
 
 // Album leaves: each page is built around a hero (its rarest sticker) plus a

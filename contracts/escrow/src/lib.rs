@@ -7,7 +7,7 @@
 //! intermediary is trusted — the code is the escrow agent. See
 //! docs/curriculum/class-4-store-escrow.md.
 
-use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env, Vec};
 
 /// Sticker transfer interface (declared locally to avoid the cdylib dependency).
 #[contractclient(name = "StickerSwap")]
@@ -15,11 +15,22 @@ pub trait StickerInterface {
     fn transfer(env: Env, from: Address, to: Address, sticker_type: u32, amount: i128);
 }
 
+/// A posted offer as held in storage. Public so generated clients can read it.
 #[contracttype]
-struct Offer {
-    maker: Address,
-    give_type: u32,
-    want_type: u32,
+pub struct Offer {
+    pub maker: Address,
+    pub give_type: u32,
+    pub want_type: u32,
+}
+
+/// An open offer plus its id — the shape returned to the frontend marketplace so
+/// it can render "maker gives X, wants Y" and accept by id without typing.
+#[contracttype]
+pub struct OfferView {
+    pub id: u64,
+    pub maker: Address,
+    pub give_type: u32,
+    pub want_type: u32,
 }
 
 #[contracttype]
@@ -112,6 +123,34 @@ impl Escrow {
 
     pub fn has_offer(e: &Env, offer_id: u64) -> bool {
         e.storage().persistent().has(&DataKey::Offer(offer_id))
+    }
+
+    /// Read one offer's contents, or `None` if it was accepted/cancelled.
+    pub fn get_offer(e: &Env, offer_id: u64) -> Option<Offer> {
+        e.storage().persistent().get(&DataKey::Offer(offer_id))
+    }
+
+    /// Every currently-open offer, with its id. Lets the frontend show a visual
+    /// marketplace instead of asking the user to type an offer number. Scans
+    /// `0..Counter`; accepted/cancelled ids are simply absent.
+    pub fn offers(e: &Env) -> Vec<OfferView> {
+        let count: u64 = e.storage().instance().get(&DataKey::Counter).unwrap_or(0);
+        let mut out = Vec::new(e);
+        for id in 0..count {
+            if let Some(o) = e
+                .storage()
+                .persistent()
+                .get::<_, Offer>(&DataKey::Offer(id))
+            {
+                out.push_back(OfferView {
+                    id,
+                    maker: o.maker,
+                    give_type: o.give_type,
+                    want_type: o.want_type,
+                });
+            }
+        }
+        out
     }
 
     pub fn sticker(e: &Env) -> Address {

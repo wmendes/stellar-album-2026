@@ -79,20 +79,26 @@ A soulbound, per-owner collection — one per person, carrying slot state.
 Asynchronous, sticker↔sticker only (no Coin on either side).
 
 ```rust
-struct Trade {
-    maker: Address,
-    give_type: u32,   // sticker the maker deposits (held in custody)
-    give_amount: i128,
-    want_type: u32,   // sticker the maker wants
-    want_amount: i128,
+pub struct Offer {
+    pub maker: Address,
+    pub give_type: u32,   // sticker the maker deposits (held in custody)
+    pub want_type: u32,   // sticker the maker wants
 }
 ```
 
-- `create_offer(maker, give_type, give_amount, want_type, want_amount)`: `maker` authorizes; the contract **pulls the offered sticker into custody** (transfer to the contract). The sticker leaves the maker's balance immediately.
-- `accept_offer(taker, offer_id)`: `taker` authorizes. **Checks-effects-interactions** — mark the offer filled *before* moving assets — then two transfers: custody→taker and taker→maker. Atomic; if any leg fails the whole tx reverts.
-- `cancel_offer(maker, offer_id)`: returns the custodied sticker to the maker.
+Trades are **1-for-1** (one sticker for one sticker); there are no amounts.
 
-Gotchas (all good teaching material): orphaned offers (no expiry → manual cancel), double-accept (check `status != Open` before moving assets), and reentrancy discipline (status change before transfers).
+Write surface:
+- `create_offer(maker, give_type, want_type) -> u64`: `maker` authorizes; the contract **pulls the offered sticker into custody** (transfer to the contract) and returns the new offer id. The sticker leaves the maker's balance immediately.
+- `accept_offer(taker, offer_id)`: `taker` authorizes. **Checks-effects-interactions** — remove the offer *before* moving assets — then two transfers: custody→taker and taker→maker. Atomic; if any leg fails the whole tx reverts.
+- `cancel_offer(offer_id)`: maker (read from the stored offer) authorizes; returns the custodied sticker to the maker.
+
+Read surface (lets the frontend render a visual marketplace instead of asking users to type an offer number):
+- `has_offer(offer_id) -> bool`: existence check.
+- `get_offer(offer_id) -> Option<Offer>`: one offer's contents, or `None` if accepted/cancelled.
+- `offers() -> Vec<OfferView>`: every currently-open offer with its id (`OfferView { id, maker, give_type, want_type }`), by scanning `0..Counter`. Accepted/cancelled ids are simply absent.
+
+Gotchas (all good teaching material): orphaned offers (no expiry → manual cancel), double-accept (the offer is removed before assets move, so a second accept traps with "no such offer"), and reentrancy discipline (state change before transfers).
 
 ### Faucet
 - `claim(addr)`: checks `env.ledger().timestamp() - last_claim[addr] >= cooldown`, mints Coin to `addr`, updates `last_claim`.

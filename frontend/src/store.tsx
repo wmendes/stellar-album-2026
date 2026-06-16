@@ -6,10 +6,23 @@ import { TYPES } from "./lib/catalog";
 
 type Clients = ReturnType<typeof makeClients>;
 
+/** An open escrow offer, flattened for the UI. */
+export interface Offer {
+  id: string;
+  maker: string;
+  give: number;
+  want: number;
+}
+
 async function readCollection(c: Clients, owner: string): Promise<number[]> {
   return Promise.all(
     TYPES.map((t) => c.sticker.balance({ owner, sticker_type: t }).then((r) => Number(r.result))),
   );
+}
+
+async function readOffers(c: Clients): Promise<Offer[]> {
+  const r = await c.escrow.offers();
+  return r.result.map((o) => ({ id: String(o.id), maker: o.maker, give: o.give_type, want: o.want_type }));
 }
 
 export interface Store {
@@ -18,6 +31,7 @@ export interface Store {
   packs: number;
   collection: number[];
   pasted: boolean[];
+  offers: Offer[];
   hasAlbum: boolean;
   claimAt: number;
   busy?: string;
@@ -33,6 +47,7 @@ export interface Store {
   createOffer(give: number, want: number): Promise<string | undefined>;
   acceptOffer(id: string): Promise<void>;
   cancelOffer(id: string): Promise<void>;
+  reloadOffers(): Promise<void>;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -50,6 +65,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [packs, setPacks] = useState(0);
   const [collection, setCollection] = useState<number[]>([]);
   const [pasted, setPasted] = useState<boolean[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [hasAlbum, setHasAlbum] = useState(false);
   const [claimAt, setClaimAt] = useState(0);
   const [busy, setBusy] = useState<string>();
@@ -68,12 +84,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setPacks(Number(packR.result));
     setClaimAt(Number(lastR.result) === 0 ? 0 : Number(lastR.result) + Number(cdR.result));
     setHasAlbum(Boolean(hasAlbumR.result));
-    const [coll, past] = await Promise.all([
+    const [coll, past, offs] = await Promise.all([
       readCollection(c, addr),
       Promise.all(TYPES.map((t) => c.album.is_pasted({ owner: addr, sticker_type: t }).then((r) => Boolean(r.result)))),
+      readOffers(c),
     ]);
     setCollection(coll);
     setPasted(past);
+    setOffers(offs);
     return coll;
   }
 
@@ -143,6 +161,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const dismissReveal = () => setReveal(undefined);
 
+  const reloadOffers = async () => {
+    if (clients) setOffers(await readOffers(clients));
+  };
+
   const createOffer = (give: number, want: number) =>
     run("Putting it on the table", async (c, addr) => {
       const sent = await (await c.escrow.create_offer({ maker: addr, give_type: give, want_type: want })).signAndSend();
@@ -157,8 +179,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
 
   const value: Store = {
-    address, coin, packs, collection, pasted, hasAlbum, claimAt, busy, error, reveal,
-    connect, claim, buy, open, dismissReveal, openAlbum, paste, createOffer, acceptOffer, cancelOffer,
+    address, coin, packs, collection, pasted, offers, hasAlbum, claimAt, busy, error, reveal,
+    connect, claim, buy, open, dismissReveal, openAlbum, paste, createOffer, acceptOffer, cancelOffer, reloadOffers,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

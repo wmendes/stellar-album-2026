@@ -98,3 +98,18 @@ fn failed_accept_conserves_balances() {
     assert_eq!(sticker.balance(&escrow.address, &CEO), 1);
     assert!(escrow.has_offer(&id));
 }
+
+/// Regression: the maker cannot accept their own offer. Combined with the
+/// sticker self-transfer bug this duplicated a sticker out of custody; the
+/// guard rejects the self-deal before any asset moves.
+#[test]
+#[should_panic(expected = "cannot accept your own offer")]
+fn cannot_accept_own_offer() {
+    let e = test_utils::setup();
+    let (sticker, escrow) = setup(&e);
+    let alice = Address::generate(&e);
+    sticker.mint(&alice, &CEO, &1);
+
+    let id = escrow.create_offer(&alice, &CEO, &CTO);
+    escrow.accept_offer(&alice, &id); // maker == taker
+}

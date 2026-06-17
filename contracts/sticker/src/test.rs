@@ -59,6 +59,23 @@ fn transfer_moves_one_copy_of_a_type() {
     assert_eq!(sticker.supply(&CEO), 2);
 }
 
+/// Regression: a self-transfer (`from == to`) must leave balance and supply
+/// untouched. Before the guard, the credit write overwrote the debit write on
+/// the shared key and duplicated `amount` stickers from a single wallet.
+#[test]
+fn self_transfer_is_a_noop() {
+    let e = test_utils::setup();
+    let admin = Address::generate(&e);
+    let alice = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    sticker.mint(&alice, &LEGENDARY, &1);
+    sticker.transfer(&alice, &alice, &LEGENDARY, &1);
+
+    assert_eq!(sticker.balance(&alice, &LEGENDARY), 1);
+    assert_eq!(sticker.supply(&LEGENDARY), 1);
+}
+
 #[test]
 fn burn_reduces_balance_and_supply() {
     let e = test_utils::setup();

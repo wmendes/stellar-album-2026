@@ -101,6 +101,15 @@ impl Sticker {
         from.require_auth();
         require_valid(sticker_type, amount);
 
+        // A self-transfer must be a no-op. Without this guard, `from == to`
+        // aliases the two balance writes below: both balances are read (same
+        // value X) BEFORE either is written, then the credit (X + amount)
+        // overwrites the debit (X - amount), fabricating `amount` stickers from
+        // nothing while `supply` is untouched. (Read-read-write-write aliasing.)
+        if from == to {
+            return;
+        }
+
         let from_bal = Self::balance(e, from.clone(), sticker_type);
         if from_bal < amount {
             panic!("sticker: insufficient balance");

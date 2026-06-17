@@ -94,6 +94,13 @@ impl Escrow {
             Some(o) => o,
             None => panic!("escrow: no such offer"),
         };
+        // Defense in depth: accepting your own offer is meaningless, and the
+        // taker -> maker leg below would self-transfer the wanted sticker. The
+        // root fix lives in `sticker::transfer`, but reject self-dealing here
+        // outright so the escrow never relies on that for soundness.
+        if taker == offer.maker {
+            panic!("escrow: cannot accept your own offer");
+        }
         // Checks-effects-interactions: consume the offer before moving assets.
         e.storage().persistent().remove(&key);
 

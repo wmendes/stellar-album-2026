@@ -74,6 +74,37 @@ fn burn_reduces_balance_and_supply() {
     assert_eq!(sticker.supply(&CEO), 1);
 }
 
+/// Regression: a self-transfer (`from == to`) must be a no-op and must NOT
+/// inflate the balance. Before the guard, `to_bal` was read before the `from`
+/// debit was written, so the credit write overwrote the debit and the holder
+/// gained `amount` out of thin air (balance 1 → 2 while supply stayed 1).
+#[test]
+fn self_transfer_does_not_inflate() {
+    let e = test_utils::setup();
+    let admin = Address::generate(&e);
+    let alice = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    sticker.mint(&alice, &CEO, &1);
+    sticker.transfer(&alice, &alice, &CEO, &1); // from == to
+
+    assert_eq!(sticker.balance(&alice, &CEO), 1);
+    assert_eq!(sticker.supply(&CEO), 1);
+}
+
+/// A self-transfer above the held balance must still trap, like any transfer.
+#[test]
+#[should_panic(expected = "insufficient balance")]
+fn self_transfer_above_balance_traps() {
+    let e = test_utils::setup();
+    let admin = Address::generate(&e);
+    let alice = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    sticker.mint(&alice, &CEO, &1);
+    sticker.transfer(&alice, &alice, &CEO, &2);
+}
+
 #[test]
 #[should_panic(expected = "insufficient balance")]
 fn transfer_more_than_held_traps() {

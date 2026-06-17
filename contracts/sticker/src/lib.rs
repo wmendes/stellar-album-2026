@@ -105,6 +105,13 @@ impl Sticker {
         if from_bal < amount {
             panic!("sticker: insufficient balance");
         }
+        // Self-transfer is a no-op. Without this guard it would *inflate* the
+        // balance: `to_bal` is read before the `from` debit is written, so when
+        // `from == to` the credit write overwrites the debit and the holder
+        // gains `amount` out of thin air. Bail out once balance is validated.
+        if from == to {
+            return;
+        }
         let to_bal = Self::balance(e, to.clone(), sticker_type);
         set_balance(e, &from, sticker_type, from_bal - amount);
         set_balance(e, &to, sticker_type, to_bal + amount);

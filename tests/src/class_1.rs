@@ -21,7 +21,10 @@ fn reproduce_class_1() {
     // Deploy Coin (placeholder minter) and Faucet, then wire the Faucet as
     // Coin's minter — the first cross-contract authority edge.
     let coin_id = e.register(Coin, (admin.clone(), admin.clone()));
-    let faucet_id = e.register(Faucet, (coin_id.clone(), 60_u64, 1_000_i128, 100_i128));
+    let faucet_id = e.register(
+        Faucet,
+        (admin.clone(), coin_id.clone(), 60_u64, 1_000_i128, 100_i128),
+    );
     let coin = CoinClient::new(&e, &coin_id);
     let faucet = FaucetClient::new(&e, &faucet_id);
     coin.set_minter(&faucet_id);

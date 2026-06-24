@@ -1,4 +1,4 @@
-.PHONY: all build test fmt fmt-check lint wasm clean
+.PHONY: all build test fmt fmt-check lint wasm bootstrap upgrade clean
 
 # Run the full local gate (mirrors CI).
 all: fmt-check lint test wasm
@@ -25,6 +25,11 @@ wasm:
 # Deploy + wire all 7 contracts on testnet and emit frontend/.env.local.
 bootstrap:
 	./bootstrap.sh
+
+# Upgrade ONE contract in place (state-preserving; keeps its id + .env.local).
+# Usage: make upgrade CONTRACT=sticker
+upgrade:
+	./upgrade.sh $(CONTRACT)
 
 clean:
 	cargo clean

@@ -57,7 +57,7 @@ COIN=$(deploy coin       -- --admin "$DEPLOYER" --minter "$DEPLOYER")
 echo "coin:    $COIN"
 STICKER=$(deploy sticker -- --admin "$DEPLOYER" --minter "$DEPLOYER" --burner "$DEPLOYER")
 echo "sticker: $STICKER"
-FAUCET=$(deploy faucet   -- --coin "$COIN" --cooldown "$COOLDOWN" --seed "$SEED" --drip "$DRIP")
+FAUCET=$(deploy faucet   -- --admin "$DEPLOYER" --coin "$COIN" --cooldown "$COOLDOWN" --seed "$SEED" --drip "$DRIP")
 echo "faucet:  $FAUCET"
 PACK=$(deploy pack       -- --admin "$DEPLOYER" --minter "$DEPLOYER" --sticker "$STICKER")
 echo "pack:    $PACK"
@@ -65,7 +65,7 @@ ALBUM=$(deploy album     -- --admin "$DEPLOYER" --sticker "$STICKER")
 echo "album:   $ALBUM"
 STORE=$(deploy store     -- --admin "$DEPLOYER" --coin "$COIN" --pack "$PACK" --treasury "$DEPLOYER" --price "$PRICE")
 echo "store:   $STORE"
-ESCROW=$(deploy escrow   -- --sticker "$STICKER")
+ESCROW=$(deploy escrow   -- --admin "$DEPLOYER" --sticker "$STICKER")
 echo "escrow:  $ESCROW"
 
 # --- phase 2: wire authority edges (admin-signed) ----------------------------

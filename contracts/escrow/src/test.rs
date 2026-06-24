@@ -8,7 +8,7 @@ const CTO: u32 = 1;
 fn setup<'a>(e: &'a Env) -> (StickerClient<'a>, EscrowClient<'a>) {
     let admin = Address::generate(e);
     let sticker_id = e.register(Sticker, (admin.clone(), admin.clone(), admin.clone()));
-    let escrow_id = e.register(Escrow, (sticker_id.clone(),));
+    let escrow_id = e.register(Escrow, (admin.clone(), sticker_id.clone()));
     (
         StickerClient::new(e, &sticker_id),
         EscrowClient::new(e, &escrow_id),
@@ -79,6 +79,33 @@ fn double_accept_traps() {
     let id = escrow.create_offer(&alice, &CEO, &CTO);
     escrow.accept_offer(&bob, &id);
     escrow.accept_offer(&bob, &id); // offer already consumed
+}
+
+/// SEC-2: the maker accepting their own offer must trap. Otherwise the
+/// `taker → maker` leg is a self-transfer that duplicates the wanted sticker.
+#[test]
+#[should_panic(expected = "cannot accept own offer")]
+fn accepting_own_offer_is_rejected() {
+    let e = test_utils::setup();
+    let (sticker, escrow) = setup(&e);
+    let alice = Address::generate(&e);
+    sticker.mint(&alice, &CEO, &1);
+    sticker.mint(&alice, &CTO, &1);
+
+    let id = escrow.create_offer(&alice, &CEO, &CTO);
+    escrow.accept_offer(&alice, &id); // self-accept must trap
+}
+
+/// UPG-2: the admin can repoint the Sticker address after deploy.
+#[test]
+fn admin_can_repoint_sticker() {
+    let e = test_utils::setup();
+    let (_sticker, escrow) = setup(&e);
+    let new_sticker = Address::generate(&e);
+
+    escrow.set_sticker(&new_sticker);
+
+    assert_eq!(escrow.sticker(), new_sticker);
 }
 
 /// Atomicity: a failed accept leaves custody intact and the offer open —

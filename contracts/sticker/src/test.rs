@@ -145,9 +145,6 @@ fn mint_without_minter_auth_traps() {
     sticker.mint(&alice, &CEO, &1); // no auth mocked
 }
 
-/// SEC-1: a self-transfer (`from == to`) must trap, not inflate the balance.
-/// On pre-guard code this call silently left the holder at `balance + amount`
-/// (stickers minted from nothing); the guard turns it into a panic.
 #[test]
 #[should_panic(expected = "cannot transfer to self")]
 fn self_transfer_is_rejected() {
@@ -157,10 +154,9 @@ fn self_transfer_is_rejected() {
     let sticker = deploy(&e, &admin, &admin, &admin);
 
     sticker.mint(&alice, &CEO, &1);
-    sticker.transfer(&alice, &alice, &CEO, &1); // must trap
+    sticker.transfer(&alice, &alice, &CEO, &1);
 }
 
-/// `upgrade` is admin-gated — with no auth mocked, the admin requirement traps.
 #[test]
 #[should_panic]
 fn upgrade_without_admin_auth_traps() {
@@ -169,7 +165,7 @@ fn upgrade_without_admin_auth_traps() {
     let sticker = deploy(&e, &admin, &admin, &admin);
 
     let hash = BytesN::from_array(&e, &[0u8; 32]);
-    sticker.upgrade(&hash); // no auth mocked → admin gate traps
+    sticker.upgrade(&hash);
 }
 
 #[test]

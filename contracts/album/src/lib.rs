@@ -118,14 +118,12 @@ impl Album {
 
     // --- admin ---
 
-    /// Repoint the Sticker contract pasted stickers are burned from. Admin only. (UPG-2.)
     pub fn set_sticker(e: &Env, new_sticker: Address) {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Sticker, &new_sticker);
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state preserved. (UPG-1.)
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

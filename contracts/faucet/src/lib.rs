@@ -117,14 +117,14 @@ impl Faucet {
 
     // --- admin ---
 
-    /// Repoint the Coin contract this faucet mints. Admin only. (UPG-2.)
+    /// Repoint the Coin contract this faucet mints. Admin only.
     pub fn set_coin(e: &Env, new_coin: Address) {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Coin, &new_coin);
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state preserved. (UPG-1.)
+    /// Replace this contract's wasm in place. Admin only.
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

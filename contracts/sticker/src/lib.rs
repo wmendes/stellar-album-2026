@@ -101,11 +101,6 @@ impl Sticker {
         from.require_auth();
         require_valid(sticker_type, amount);
 
-        // Reject self-transfer. With `from == to`, both endpoints resolve to the
-        // same `Balance(owner, type)` key: the credit is computed from the
-        // pre-debit balance and then overwrites the debit, leaving the holder at
-        // `balance + amount` — stickers minted from nothing, breaking
-        // conservation. No self-transfer is ever legitimate here. (SEC-1.)
         if from == to {
             panic!("sticker: cannot transfer to self");
         }
@@ -133,7 +128,6 @@ impl Sticker {
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state preserved. (UPG-1.)
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

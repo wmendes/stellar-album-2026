@@ -42,21 +42,7 @@ pub fn extend_instance(env: &Env) {
         .extend_ttl(INSTANCE_THRESHOLD, INSTANCE_EXTEND_TO);
 }
 
-// ---------------------------------------------------------------------------
-// Upgrade convention
-//
-// Contracts are deployed without upgradeability in v0.1–v0.4, so fixing a bug
-// meant a full redeploy: new contract id, re-wired authority graph, and lost
-// persistent state. This shared helper gives every contract one audited,
-// admin-gated, in-place upgrade path. The contract id and all storage (instance
-// + persistent) survive the swap — only the code changes. See docs/decisions.md
-// D24 and SPEC.md (PR-UPG / UPG-1).
-// ---------------------------------------------------------------------------
-
-/// Admin-gated, in-place wasm upgrade. The caller passes its stored `admin`;
-/// this requires that admin's auth, then replaces the *current* contract's wasm
-/// with `new_wasm_hash` (which must already be installed on the network). State
-/// is preserved — this swaps code, not storage.
+/// Admin-gated, in-place wasm upgrade. See docs/decisions.md D24.
 pub fn upgrade(env: &Env, admin: &Address, new_wasm_hash: BytesN<32>) {
     admin.require_auth();
     env.deployer().update_current_contract_wasm(new_wasm_hash);

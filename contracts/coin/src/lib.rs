@@ -62,8 +62,7 @@ impl Coin {
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state (balances,
-    /// supply, metadata) preserved. (UPG-1.)
+    /// Replace this contract's wasm in place. Admin only.
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

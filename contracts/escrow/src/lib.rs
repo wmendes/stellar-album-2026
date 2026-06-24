@@ -100,10 +100,6 @@ impl Escrow {
             Some(o) => o,
             None => panic!("escrow: no such offer"),
         };
-        // Reject self-accept. With `taker == maker` the second leg (taker→maker
-        // of `want_type`) is a self-transfer; it would duplicate the wanted
-        // sticker (the Sticker self-transfer bug). Guarded here independently of
-        // the Sticker fix — defense in depth. (SEC-2.)
         if taker == offer.maker {
             panic!("escrow: cannot accept own offer");
         }
@@ -177,15 +173,13 @@ impl Escrow {
     // --- admin ---
 
     /// Repoint the Sticker contract traded through this escrow. Admin only.
-    /// (UPG-2.)
     pub fn set_sticker(e: &Env, new_sticker: Address) {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Sticker, &new_sticker);
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state (open offers and
-    /// custody) preserved. (UPG-1.)
+    /// Replace this contract's wasm in place. Admin only.
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

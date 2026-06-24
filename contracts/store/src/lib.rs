@@ -92,21 +92,18 @@ impl Store {
 
     // --- admin ---
 
-    /// Repoint the Coin contract used for payment. Admin only. (UPG-2.)
     pub fn set_coin(e: &Env, new_coin: Address) {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Coin, &new_coin);
         common::extend_instance(e);
     }
 
-    /// Repoint the Pack contract minted to buyers. Admin only. (UPG-2.)
     pub fn set_pack(e: &Env, new_pack: Address) {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Pack, &new_pack);
         common::extend_instance(e);
     }
 
-    /// Repoint where paid Coin is sent. Admin only. (UPG-2.)
     pub fn set_treasury(e: &Env, new_treasury: Address) {
         Self::admin(e).require_auth();
         e.storage()
@@ -115,7 +112,6 @@ impl Store {
         common::extend_instance(e);
     }
 
-    /// Replace this contract's wasm in place. Admin only; state preserved. (UPG-1.)
     pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
         common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }

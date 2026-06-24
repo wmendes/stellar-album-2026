@@ -12,7 +12,7 @@
 //!   - `burn`   → the burner (the Album contract, Phase 6, when pasting)
 //!   - `transfer` → the `from` owner (also how the Escrow moves stickers)
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracttype]
 enum DataKey {
@@ -122,6 +122,10 @@ impl Sticker {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Burner, &new_burner);
         common::extend_instance(e);
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

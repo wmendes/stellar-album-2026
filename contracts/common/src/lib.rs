@@ -9,7 +9,7 @@
 //! these helpers cannot be proven "archival-safe" by unit tests. That is a
 //! testnet/deploy gate — see docs/implementation-plan.md (Hard Rule 2).
 
-use soroban_sdk::{Env, IntoVal, Val};
+use soroban_sdk::{Address, BytesN, Env, IntoVal, Val};
 
 /// Ledgers per day at ~5s close time.
 pub const DAY_IN_LEDGERS: u32 = 17_280;
@@ -40,6 +40,11 @@ pub fn extend_instance(env: &Env) {
     env.storage()
         .instance()
         .extend_ttl(INSTANCE_THRESHOLD, INSTANCE_EXTEND_TO);
+}
+
+pub fn upgrade(env: &Env, admin: &Address, new_wasm_hash: BytesN<32>) {
+    admin.require_auth();
+    env.deployer().update_current_contract_wasm(new_wasm_hash);
 }
 
 // ---------------------------------------------------------------------------

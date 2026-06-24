@@ -7,7 +7,7 @@
 //! Coin (pay) + Pack (mint), with the Store as Pack's minter.
 
 use soroban_sdk::{
-    contract, contractclient, contractimpl, contracttype, Address, Env, MuxedAddress,
+    contract, contractclient, contractimpl, contracttype, Address, BytesN, Env, MuxedAddress,
 };
 
 /// Coin payment interface (declared locally to avoid the cdylib dependency).
@@ -88,6 +88,10 @@ impl Store {
 
     pub fn price(e: &Env) -> i128 {
         e.storage().instance().get(&DataKey::Price).unwrap()
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

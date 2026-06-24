@@ -8,7 +8,7 @@ const CTO: u32 = 1;
 fn setup<'a>(e: &'a Env) -> (StickerClient<'a>, EscrowClient<'a>) {
     let admin = Address::generate(e);
     let sticker_id = e.register(Sticker, (admin.clone(), admin.clone(), admin.clone()));
-    let escrow_id = e.register(Escrow, (sticker_id.clone(),));
+    let escrow_id = e.register(Escrow, (admin.clone(), sticker_id.clone()));
     (
         StickerClient::new(e, &sticker_id),
         EscrowClient::new(e, &escrow_id),

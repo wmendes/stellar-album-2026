@@ -7,7 +7,9 @@
 //! intermediary is trusted — the code is the escrow agent. See
 //! docs/curriculum/class-4-store-escrow.md.
 
-use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env, Vec};
+use soroban_sdk::{
+    contract, contractclient, contractimpl, contracttype, Address, BytesN, Env, Vec,
+};
 
 /// Sticker transfer interface (declared locally to avoid the cdylib dependency).
 #[contractclient(name = "StickerSwap")]
@@ -35,6 +37,7 @@ pub struct OfferView {
 
 #[contracttype]
 enum DataKey {
+    Admin,
     /// Sticker contract traded through this escrow.
     Sticker,
     /// Next offer id.
@@ -48,8 +51,10 @@ pub struct Escrow;
 
 #[contractimpl]
 impl Escrow {
-    pub fn __constructor(e: &Env, sticker: Address) {
-        e.storage().instance().set(&DataKey::Sticker, &sticker);
+    pub fn __constructor(e: &Env, admin: Address, sticker: Address) {
+        let s = e.storage().instance();
+        s.set(&DataKey::Admin, &admin);
+        s.set(&DataKey::Sticker, &sticker);
     }
 
     /// Post an offer: deposit one `give_type` sticker into custody and advertise
@@ -155,6 +160,14 @@ impl Escrow {
 
     pub fn sticker(e: &Env) -> Address {
         e.storage().instance().get(&DataKey::Sticker).unwrap()
+    }
+
+    pub fn admin(e: &Env) -> Address {
+        e.storage().instance().get(&DataKey::Admin).unwrap()
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 
     fn next_id(e: &Env) -> u64 {

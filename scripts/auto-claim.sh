@@ -125,19 +125,7 @@ for KEY_NAME in "${WALLETS[@]}"; do
     fi
   fi
 
-  # ── step 5: ensure album exists ───────────────────────────────────────────
-  HAS_ALBUM=$(invoke "$ALBUM_ID" "$KEY_NAME" has_album --owner "$ADDRESS" 2>/dev/null || echo "false")
-  if [ "$HAS_ALBUM" = "false" ]; then
-    echo "[$(ts)] Creating album..."
-    invoke "$ALBUM_ID" "$KEY_NAME" open_album --owner "$ADDRESS" >/dev/null 2>&1 || {
-      die "[$KEY_NAME] Failed to create album"
-      ERRORS=$((ERRORS + 1))
-      continue
-    }
-    echo "[$(ts)] Album created"
-  fi
-
-  # ── step 6: paste all available stickers ──────────────────────────────────
+  # ── step 5: paste all available stickers ──────────────────────────────────
   PASTED=0
   for TYPE_ID in $(seq 0 $((TYPE_COUNT - 1))); do
     ALREADY=$(invoke "$ALBUM_ID" "$KEY_NAME" is_pasted --owner "$ADDRESS" --sticker_type "$TYPE_ID" 2>/dev/null || echo "false")

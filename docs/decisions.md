@@ -119,6 +119,28 @@ ADR-style record of the decisions made while designing `stellar-album`, and *why
 - The pack reveal reads drawn stickers from **on-chain balance diff** (before/after `open`), not the tx return value — robust across SDK result-parsing, and authoritative.
 - `bootstrap.sh` reuses an existing funded deployer key (idempotent) and quotes the network passphrase in `.env.local`.
 
+## D24 — Contracts are upgradeable in place (PR-UPG / UPG-1)
+**Decision:** every stateful contract (Coin, Sticker, Pack, Album, Store, Faucet, Escrow) exposes an admin-gated `upgrade(new_wasm_hash)` that calls `env.deployer().update_current_contract_wasm(...)` through a shared `common::upgrade(env, admin, hash)` helper.
+**Why:** v0.1–v0.4 contracts had no upgrade path, so any fix meant a full redeploy — new contract ids, re-wiring the authority graph, and **loss of all persistent state** (balances, albums, open offers). A one-line bug became a deploy-and-migration problem. In-place upgrade keeps the id and storage; only code changes.
+**How:** one audited helper in `common` so all seven gate upgrades identically (admin auth). `make upgrade CONTRACT=<name>` (`upgrade.sh`) installs the new wasm and invokes `upgrade` against the existing id, leaving `frontend/.env.local` untouched.
+**Trade-off:** upgradeability widens the trust surface (a compromised admin key can swap code). Accepted for a testnet teaching system; mainnet would gate this behind a timelock/governance. v0.5 upgrades are constrained to **additive** storage-schema changes (no migration hook yet — see open questions).
+
+## D25 — Admin added to Faucet and Escrow constructors (UPG-1/UPG-2)
+**Decision:** Faucet and Escrow, which previously stored no admin, now take `admin` as their first constructor arg (matching Coin/Sticker/Pack/Album/Store), exposed via `admin()`.
+**Why:** both `upgrade` and the new address setters need an authority to gate them. Without a stored admin there is no on-chain principal to `require_auth`. Constructor call sites updated: `faucet`/`escrow` unit tests and `tests/src/class_1.rs` + `class_4.rs`; `bootstrap.sh` passes `--admin "$DEPLOYER"`.
+
+## D26 — Reconfigurable authority graph via setters (UPG-2)
+**Decision:** extend the existing `Sticker.set_minter/set_burner` convention to every cross-contract edge address: `Pack.set_sticker`, `Album.set_sticker`, `Store.set_coin/set_pack/set_treasury`, `Escrow.set_sticker`, `Faucet.set_coin`. Constructors still supply the *initial* wiring.
+**Why:** paired with upgradeability, a mis-wire or a contract swap can be repaired without redeploy. Each setter is admin-gated and bumps instance TTL (Hard Rule 2).
+
+## D27 — Self-transfer / self-accept rejected on-chain (SEC-1/SEC-2)
+**Decision:** `Sticker.transfer` rejects `from == to`; `Escrow.accept_offer` rejects `taker == maker`. Both panic rather than no-op, enforced in the contract.
+**Why (real bug):** with `from == to`, the credit write overwrote the debit on the same `Balance(owner, type)` key, leaving the holder at `balance + amount` — stickers minted from nothing, breaking balance conservation. `accept_offer` with `taker == maker` amplified it via the self-transfer of `want_type`. The escrow guard is independent of the sticker guard (defense in depth: the contract is the trust boundary, not the dApp). Covered by `self_transfer_is_rejected` and `accepting_own_offer_is_rejected`.
+
+## D28 — Events (observability) deferred to a follow-up (OBS-1)
+**Decision:** structured per-mutation events are specced ([SPEC.md](../SPEC.md) OBS-1) but **not** shipped in PR-UPG; they land in a separate commit/PR.
+**Why:** events are additive observability, not part of "contracts are upgradeable"; keeping them out keeps PR-UPG focused and its diff reviewable. The frontend reveal already reads drawn types from the tx result, so nothing depends on events yet.
+
 ---
 
 ## Open questions (not yet decided)

@@ -8,7 +8,9 @@
 //! Phase 2. Unit tests point the minter at a test address; the integration test
 //! rewires it to the real Faucet contract.
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, MuxedAddress, String};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, Address, BytesN, Env, MuxedAddress, String,
+};
 use stellar_tokens::fungible::{Base, FungibleToken};
 
 #[contracttype]
@@ -58,6 +60,12 @@ impl Coin {
         Self::minter(e).require_auth();
         Base::mint(e, &to, amount);
         common::extend_instance(e);
+    }
+
+    /// Replace this contract's wasm in place. Admin only; state (balances,
+    /// supply, metadata) preserved. (UPG-1.)
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

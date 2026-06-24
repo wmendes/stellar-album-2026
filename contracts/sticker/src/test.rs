@@ -1,7 +1,7 @@
 use crate::{Sticker, StickerClient};
 use soroban_sdk::{
     testutils::{Address as _, MockAuth, MockAuthInvoke},
-    Address, Env, IntoVal,
+    Address, BytesN, Env, IntoVal,
 };
 
 const CEO: u32 = 0; // a common type
@@ -143,6 +143,33 @@ fn mint_without_minter_auth_traps() {
     let sticker = deploy(&e, &admin, &minter, &admin);
 
     sticker.mint(&alice, &CEO, &1); // no auth mocked
+}
+
+/// SEC-1: a self-transfer (`from == to`) must trap, not inflate the balance.
+/// On pre-guard code this call silently left the holder at `balance + amount`
+/// (stickers minted from nothing); the guard turns it into a panic.
+#[test]
+#[should_panic(expected = "cannot transfer to self")]
+fn self_transfer_is_rejected() {
+    let e = test_utils::setup();
+    let admin = Address::generate(&e);
+    let alice = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    sticker.mint(&alice, &CEO, &1);
+    sticker.transfer(&alice, &alice, &CEO, &1); // must trap
+}
+
+/// `upgrade` is admin-gated — with no auth mocked, the admin requirement traps.
+#[test]
+#[should_panic]
+fn upgrade_without_admin_auth_traps() {
+    let e = Env::default();
+    let admin = Address::generate(&e);
+    let sticker = deploy(&e, &admin, &admin, &admin);
+
+    let hash = BytesN::from_array(&e, &[0u8; 32]);
+    sticker.upgrade(&hash); // no auth mocked → admin gate traps
 }
 
 #[test]

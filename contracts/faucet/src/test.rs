@@ -13,7 +13,10 @@ const DRIP: i128 = 100;
 fn setup<'a>(e: &'a Env) -> (CoinClient<'a>, FaucetClient<'a>) {
     let admin = Address::generate(e);
     let coin_id = e.register(Coin, (admin.clone(), admin.clone()));
-    let faucet_id = e.register(Faucet, (coin_id.clone(), COOLDOWN, SEED, DRIP));
+    let faucet_id = e.register(
+        Faucet,
+        (admin.clone(), coin_id.clone(), COOLDOWN, SEED, DRIP),
+    );
 
     let coin = CoinClient::new(e, &coin_id);
     coin.set_minter(&faucet_id); // the Faucet → Coin authority edge

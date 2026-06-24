@@ -8,7 +8,7 @@
 //! burner) and marks the slot; this is irreversible. See
 //! docs/curriculum/class-3-pack-album.md and docs/decisions.md D17.
 
-use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, BytesN, Env};
 
 /// Minimal view of the Sticker contract the Album burns from. Declared locally
 /// to avoid depending on the `sticker` cdylib (`__constructor` collision).
@@ -114,6 +114,20 @@ impl Album {
 
     pub fn sticker(e: &Env) -> Address {
         e.storage().instance().get(&DataKey::Sticker).unwrap()
+    }
+
+    // --- admin ---
+
+    /// Repoint the Sticker contract pasted stickers are burned from. Admin only. (UPG-2.)
+    pub fn set_sticker(e: &Env, new_sticker: Address) {
+        Self::admin(e).require_auth();
+        e.storage().instance().set(&DataKey::Sticker, &new_sticker);
+        common::extend_instance(e);
+    }
+
+    /// Replace this contract's wasm in place. Admin only; state preserved. (UPG-1.)
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

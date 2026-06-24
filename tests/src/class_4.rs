@@ -24,7 +24,10 @@ fn reproduce_class_4() {
 
     // Deploy the whole system.
     let coin_id = e.register(Coin, (admin.clone(), admin.clone()));
-    let faucet_id = e.register(Faucet, (coin_id.clone(), 60_u64, 1_000_i128, 100_i128));
+    let faucet_id = e.register(
+        Faucet,
+        (admin.clone(), coin_id.clone(), 60_u64, 1_000_i128, 100_i128),
+    );
     let sticker_id = e.register(Sticker, (admin.clone(), admin.clone(), admin.clone()));
     let pack_id = e.register(Pack, (admin.clone(), admin.clone(), sticker_id.clone()));
     let store_id = e.register(
@@ -37,7 +40,7 @@ fn reproduce_class_4() {
             100_i128,
         ),
     );
-    let escrow_id = e.register(Escrow, (sticker_id.clone(),));
+    let escrow_id = e.register(Escrow, (admin.clone(), sticker_id.clone()));
 
     let coin = CoinClient::new(&e, &coin_id);
     let faucet = FaucetClient::new(&e, &faucet_id);

@@ -14,7 +14,7 @@ function fmtRemaining(sec: number): string {
 }
 
 export default function Shop() {
-  const { coin, packs, claimAt, busy, error, claim, buy, open, reveal, opening, dismissReveal, clearError } = useStore();
+  const { coin, packs, claimAt, busy, error, claim, buy, open, reveal, opening, dismissReveal, clearError, retryFn } = useStore();
   const navigate = useNavigate();
   const now = Date.now() / 1000;
   const claimReady = claimAt === 0 || now >= claimAt;
@@ -68,7 +68,7 @@ export default function Shop() {
         </button>
       </div>
 
-      <Toast busy={busy} error={error} onDismiss={clearError} />
+      <Toast busy={busy} error={error} onDismiss={clearError} onRetry={retryFn} />
 
       {(opening || reveal) && (
         <PackReveal

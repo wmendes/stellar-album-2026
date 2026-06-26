@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "devDependencies": {
-    "@caatinga/cli": "^3.5.0",
-    "@caatinga/core": "^3.5.0"
+    "@caatinga/cli": "3.5.1",
+    "@caatinga/core": "3.5.1"
   }
 }

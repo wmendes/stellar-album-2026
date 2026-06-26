@@ -24,7 +24,7 @@ wasm:
 
 # Deploy + wire all 7 contracts on testnet and emit frontend/.env.local.
 bootstrap:
-	./bootstrap.sh
+	caatinga deploy --source deployer --network testnet
 
 clean:
 	cargo clean

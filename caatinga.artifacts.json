@@ -1,0 +1,131 @@
+{
+  "project": "stellar-album",
+  "networks": {
+    "testnet": {
+      "contracts": {
+        "coin": {
+          "contractId": "CCX2B44ZMZTFNR55JWIQZL2T7XTIRMVSLWCUZJPTO2TOZKXSGUXWCLUM",
+          "wasmHash": "40fc23981dc71e8ef916f59b70d3426f6978d47a0804f56bc9cf54b87fd03bb7",
+          "deployedAt": "2026-06-26T00:55:46.788Z",
+          "sourcePath": "./contracts/coin",
+          "wasmPath": "./target/wasm32v1-none/release/coin.wasm",
+          "dependencies": [],
+          "resolvedDeployArgs": {
+            "admin": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "minter": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV"
+          }
+        },
+        "sticker": {
+          "contractId": "CBZ77AJYI6CMDJ7M6MYUSPOPIDWS4RQVWQARDNX6I3IFJH6XIG6LV274",
+          "wasmHash": "e3e18d9ec4106fd63f549261b86cd9257e1786703168c49ea213c368c667586a",
+          "deployedAt": "2026-06-26T00:55:58.380Z",
+          "sourcePath": "./contracts/sticker",
+          "wasmPath": "./target/wasm32v1-none/release/sticker.wasm",
+          "dependencies": [],
+          "resolvedDeployArgs": {
+            "admin": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "minter": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "burner": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV"
+          }
+        },
+        "faucet": {
+          "contractId": "CCDLARG4ZORHLN43NKSNII37CRKLBV5AZVTDIUQFME3UHLYPKIIEW4IH",
+          "wasmHash": "d38cb10a8d17e869404d9a56de1de89ac19270a5e2a5e46eab84abcb3033b5e6",
+          "deployedAt": "2026-06-26T00:56:07.383Z",
+          "sourcePath": "./contracts/faucet",
+          "wasmPath": "./target/wasm32v1-none/release/faucet.wasm",
+          "dependencies": [
+            "coin"
+          ],
+          "resolvedDeployArgs": {
+            "coin": "CCX2B44ZMZTFNR55JWIQZL2T7XTIRMVSLWCUZJPTO2TOZKXSGUXWCLUM",
+            "cooldown": 10800,
+            "seed": 1000,
+            "drip": 100
+          }
+        },
+        "pack": {
+          "contractId": "CDXKJOI2JOVTOKEH7CYIMK3MKURUY4CEIJFIJZ36QCWM6IPPBGFUOGGL",
+          "wasmHash": "b65a677fb41277492f46467f14eea71d1be2a6410a98bdc8b47f016a826194d0",
+          "deployedAt": "2026-06-26T00:56:17.105Z",
+          "sourcePath": "./contracts/pack",
+          "wasmPath": "./target/wasm32v1-none/release/pack.wasm",
+          "dependencies": [
+            "sticker"
+          ],
+          "resolvedDeployArgs": {
+            "admin": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "minter": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "sticker": "CBZ77AJYI6CMDJ7M6MYUSPOPIDWS4RQVWQARDNX6I3IFJH6XIG6LV274"
+          }
+        },
+        "album": {
+          "contractId": "CB22D5BZM57ZPP6UUQMSNX5TU3LLTHXLQYQNZGGSFFXU7PND6EACEW3M",
+          "wasmHash": "677388497b83ae4c57b1c3b8c8566057b8709877994415247882a80ea950aaf2",
+          "deployedAt": "2026-06-26T00:56:30.314Z",
+          "sourcePath": "./contracts/album",
+          "wasmPath": "./target/wasm32v1-none/release/album.wasm",
+          "dependencies": [
+            "sticker"
+          ],
+          "resolvedDeployArgs": {
+            "admin": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "sticker": "CBZ77AJYI6CMDJ7M6MYUSPOPIDWS4RQVWQARDNX6I3IFJH6XIG6LV274"
+          }
+        },
+        "store": {
+          "contractId": "CDEQH2KHX35LPUU2PEYEDZDSGUCJ5LRAUXWD3VZ6SCFAWTFNQYWMNCJ6",
+          "wasmHash": "5488033ee16c8941630e816e9f2ec02443eb7134f59820e1ad8a7528cdf7b929",
+          "deployedAt": "2026-06-26T00:56:59.599Z",
+          "sourcePath": "./contracts/store",
+          "wasmPath": "./target/wasm32v1-none/release/store.wasm",
+          "dependencies": [
+            "coin",
+            "pack"
+          ],
+          "resolvedDeployArgs": {
+            "admin": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "coin": "CCX2B44ZMZTFNR55JWIQZL2T7XTIRMVSLWCUZJPTO2TOZKXSGUXWCLUM",
+            "pack": "CDXKJOI2JOVTOKEH7CYIMK3MKURUY4CEIJFIJZ36QCWM6IPPBGFUOGGL",
+            "treasury": "GCLOJ74QSSENDDHCTX67LHA3ZFLFAAGR4KZ52UVO27GMKELMH37XNSIV",
+            "price": 100
+          }
+        },
+        "escrow": {
+          "contractId": "CCPXXUKCEK32COCG7VTZTIDK4ZH2PI5FP3SMOG3CH5P4K7RIKXY5CKTV",
+          "wasmHash": "cbbd7755a7e59256485eaf79acd30fe0e46c5346f5306be9367322ab89059713",
+          "deployedAt": "2026-06-26T00:57:13.935Z",
+          "sourcePath": "./contracts/escrow",
+          "wasmPath": "./target/wasm32v1-none/release/escrow.wasm",
+          "dependencies": [
+            "sticker"
+          ],
+          "resolvedDeployArgs": {
+            "sticker": "CBZ77AJYI6CMDJ7M6MYUSPOPIDWS4RQVWQARDNX6I3IFJH6XIG6LV274"
+          }
+        }
+      },
+      "dependencyGraph": {
+        "coin": [],
+        "sticker": [],
+        "faucet": [
+          "coin"
+        ],
+        "pack": [
+          "sticker"
+        ],
+        "album": [
+          "sticker"
+        ],
+        "store": [
+          "coin",
+          "pack"
+        ],
+        "escrow": [
+          "sticker"
+        ]
+      }
+    }
+  },
+  "version": 1
+}

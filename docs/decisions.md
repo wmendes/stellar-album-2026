@@ -117,7 +117,7 @@ ADR-style record of the decisions made while designing `stellar-album`, and *why
 - Vite `define: { global: "globalThis" }` — stellar-wallets-kit bundles wallet modules that reference Node's `global`.
 - Contract clients import the generated **source** (`../contracts/<name>/src/index.ts`); the bindings' package `exports` points at an unbuilt `./dist`.
 - The pack reveal reads drawn stickers from **on-chain balance diff** (before/after `open`), not the tx return value — robust across SDK result-parsing, and authoritative.
-- `bootstrap.sh` reuses an existing funded deployer key (idempotent) and quotes the network passphrase in `.env.local`.
+- `caatinga deploy` (via `make bootstrap`) reuses an existing funded deployer key (idempotent) and quotes the network passphrase in `.env.local` via `caatinga sync-env`.
 
 ---
 

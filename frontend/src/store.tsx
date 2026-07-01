@@ -26,12 +26,42 @@ export interface RevealState {
   packs: RevealCard[][];
 }
 
+/** Best-effort human message from any thrown value. Wallets often reject with a
+ *  plain object (not an Error), so `String(e)` would give "[object Object]";
+ *  dig for a message field and fall back to JSON before giving up. */
+function messageOf(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  if (e && typeof e === "object") {
+    const o = e as Record<string, unknown>;
+    if (typeof o.message === "string" && o.message) return o.message;
+    if (typeof o.error === "string" && o.error) return o.error;
+    const inner = o.error as Record<string, unknown> | undefined;
+    if (inner && typeof inner.message === "string" && inner.message) return inner.message;
+    try {
+      const j = JSON.stringify(e);
+      if (j && j !== "{}") return j;
+    } catch {
+      /* circular / non-serializable — fall through */
+    }
+  }
+  return String(e);
+}
+
 /** Turn a raw wallet/chain exception into plain language for the UI. The
  *  technical detail still goes to the console for debugging. */
 function friendlyError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e);
-  console.error(raw); // eslint-disable-line no-console
-  const m = raw.toLowerCase();
+  console.error(e); // eslint-disable-line no-console -- full object aids debugging
+  const raw = messageOf(e);
+  // Scan the human message *and* a deep dump: the giveaway keyword (e.g.
+  // "declined") is sometimes only in a nested field of the thrown object.
+  let dump = "";
+  try {
+    dump = JSON.stringify(e);
+  } catch {
+    /* ignore */
+  }
+  const m = `${raw} ${dump}`.toLowerCase();
   if (/(declin|reject|denied|cancel|user.*close)/.test(m)) return "You cancelled the request in your wallet.";
   if (/(no wallet|not found|no module|not installed|install)/.test(m)) return "No Stellar wallet found. Install Freighter (or another) to continue.";
   if (/(not enough|insufficient|balance)/.test(m)) return "You don't have enough for that.";
@@ -39,7 +69,8 @@ function friendlyError(e: unknown): string {
   if (/(fetch|network|connection|econnrefused|econnreset|enotfound)/.test(m)) return "Network issue — retrying…";
   if (/(rpc|horizon|status 5\d\d)/.test(m)) return "Stellar node is busy — retrying…";
   if (/(revert|status=|failed|trap|panic)/.test(m)) return "That transaction didn't go through. Please try again.";
-  return raw;
+  // Never surface "[object Object]" or an empty blob to the user.
+  return raw && raw !== "[object Object]" && raw !== "{}" ? raw : "Something went wrong. Please try again.";
 }
 
 async function readCollection(c: Clients, owner: string): Promise<number[]> {
@@ -228,8 +259,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setError("Not enough coins — claim some first!");
       return;
     }
-    await sendThen("Buying a pack", (c, addr) => c.store.buy_pack({ buyer: addr }));
-    setPackBought(true);
+    // Only celebrate if the purchase actually went through. `run` swallows
+    // errors (e.g. the user rejecting the wallet prompt) and resolves to
+    // undefined, so gate the confetti on a truthy result — otherwise a
+    // cancelled buy would still pop the "pack bought!" modal over the error.
+    const ok = await run("Buying a pack", async (c, addr) => {
+      await (await c.store.buy_pack({ buyer: addr })).signAndSend();
+      await refresh(c, addr);
+      return true;
+    });
+    if (ok) setPackBought(true);
   };
   const dismissPackBought = () => setPackBought(false);
   const openAlbum = () => sendThen("Binding album", (c, addr) => c.album.open_album({ owner: addr }));

@@ -7,7 +7,7 @@
 //! Coin (pay) + Pack (mint), with the Store as Pack's minter.
 
 use soroban_sdk::{
-    contract, contractclient, contractimpl, contracttype, Address, Env, MuxedAddress,
+    contract, contractclient, contractimpl, contracttype, Address, BytesN, Env, MuxedAddress,
 };
 
 /// Coin payment interface (declared locally to avoid the cdylib dependency).
@@ -88,6 +88,32 @@ impl Store {
 
     pub fn price(e: &Env) -> i128 {
         e.storage().instance().get(&DataKey::Price).unwrap()
+    }
+
+    // --- admin ---
+
+    pub fn set_coin(e: &Env, new_coin: Address) {
+        Self::admin(e).require_auth();
+        e.storage().instance().set(&DataKey::Coin, &new_coin);
+        common::extend_instance(e);
+    }
+
+    pub fn set_pack(e: &Env, new_pack: Address) {
+        Self::admin(e).require_auth();
+        e.storage().instance().set(&DataKey::Pack, &new_pack);
+        common::extend_instance(e);
+    }
+
+    pub fn set_treasury(e: &Env, new_treasury: Address) {
+        Self::admin(e).require_auth();
+        e.storage()
+            .instance()
+            .set(&DataKey::Treasury, &new_treasury);
+        common::extend_instance(e);
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

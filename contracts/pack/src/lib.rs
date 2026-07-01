@@ -14,7 +14,8 @@
 //! be safe on mainnet with real value. See docs/curriculum/class-3-pack-album.md.
 
 use soroban_sdk::{
-    contract, contractclient, contractimpl, contracttype, xdr::ToXdr, Address, Bytes, Env, Vec,
+    contract, contractclient, contractimpl, contracttype, xdr::ToXdr, Address, Bytes, BytesN, Env,
+    Vec,
 };
 
 /// Minimal view of the Sticker contract Pack mints into. Declared locally to
@@ -137,6 +138,16 @@ impl Pack {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Minter, &new_minter);
         common::extend_instance(e);
+    }
+
+    pub fn set_sticker(e: &Env, new_sticker: Address) {
+        Self::admin(e).require_auth();
+        e.storage().instance().set(&DataKey::Sticker, &new_sticker);
+        common::extend_instance(e);
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

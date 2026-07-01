@@ -119,6 +119,37 @@ Album   ──burn──►   Sticker    (Album is Sticker's burner)
 Escrow  ──transfer──► Sticker  (custody; Escrow never mints)
 ```
 
+```mermaid
+flowchart LR
+    User((Player))
+    Faucet[Faucet]
+    Coin[Coin]
+    Store[Store]
+    Pack[Pack]
+    Sticker[Sticker]
+    Album[Album]
+    Escrow[Escrow]
+
+    User -->|claim| Faucet
+    User -->|buy_pack| Store
+    User -->|open| Pack
+    User -->|paste| Album
+    User -->|create/accept/cancel offer| Escrow
+
+    Faucet -->|mint| Coin
+    Store -->|transfer in| Coin
+    Store -->|mint| Pack
+    Pack -->|mint| Sticker
+    Album -->|burn| Sticker
+    Escrow -->|transfer / custody| Sticker
+```
+
+Each authority edge is an admin-settable address (`set_minter` / `set_burner` /
+`set_sticker` / …) so the graph is **reconfigurable after deploy** (UPG-2,
+[decision D26](decisions.md)). Every stateful contract is also **upgradeable in
+place** (admin-gated `upgrade(wasm_hash)`, UPG-1, [decision D24](decisions.md)),
+so a fix preserves contract ids and state instead of forcing a redeploy.
+
 The #1 cross-contract mistake is leaving `mint`/`burn` open so anyone can call it. Each privileged function must verify the auth of its **configured** caller address (e.g. `Sticker.mint` checks the auth of the Pack contract address set at init).
 
 ## Implementation risks to watch

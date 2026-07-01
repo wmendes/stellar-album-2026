@@ -10,7 +10,7 @@
 //! The cooldown is a constructor parameter: short in a live classroom, long in
 //! a self-paced campaign (see docs/economy-and-rarity.md).
 
-use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractclient, contractimpl, contracttype, Address, BytesN, Env};
 
 /// Minimal view of the Coin contract the Faucet needs to call. Declaring the
 /// interface locally (rather than depending on the `coin` cdylib crate) avoids
@@ -22,6 +22,8 @@ pub trait CoinInterface {
 
 #[contracttype]
 enum DataKey {
+    /// May repoint the Coin address and authorize upgrades.
+    Admin,
     /// Address of the Coin contract this faucet mints.
     Coin,
     /// Seconds that must elapse between repeat claims.
@@ -39,8 +41,16 @@ pub struct Faucet;
 
 #[contractimpl]
 impl Faucet {
-    pub fn __constructor(e: &Env, coin: Address, cooldown: u64, seed: i128, drip: i128) {
+    pub fn __constructor(
+        e: &Env,
+        admin: Address,
+        coin: Address,
+        cooldown: u64,
+        seed: i128,
+        drip: i128,
+    ) {
         let s = e.storage().instance();
+        s.set(&DataKey::Admin, &admin);
         s.set(&DataKey::Coin, &coin);
         s.set(&DataKey::Cooldown, &cooldown);
         s.set(&DataKey::Seed, &seed);
@@ -76,6 +86,10 @@ impl Faucet {
         amount
     }
 
+    pub fn admin(e: &Env) -> Address {
+        e.storage().instance().get(&DataKey::Admin).unwrap()
+    }
+
     pub fn coin(e: &Env) -> Address {
         e.storage().instance().get(&DataKey::Coin).unwrap()
     }
@@ -99,6 +113,20 @@ impl Faucet {
             .persistent()
             .get(&DataKey::LastClaim(claimer))
             .unwrap_or(0)
+    }
+
+    // --- admin ---
+
+    /// Repoint the Coin contract this faucet mints. Admin only.
+    pub fn set_coin(e: &Env, new_coin: Address) {
+        Self::admin(e).require_auth();
+        e.storage().instance().set(&DataKey::Coin, &new_coin);
+        common::extend_instance(e);
+    }
+
+    /// Replace this contract's wasm in place. Admin only.
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

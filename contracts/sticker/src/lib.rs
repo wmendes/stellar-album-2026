@@ -12,7 +12,7 @@
 //!   - `burn`   → the burner (the Album contract, Phase 6, when pasting)
 //!   - `transfer` → the `from` owner (also how the Escrow moves stickers)
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env};
 
 #[contracttype]
 enum DataKey {
@@ -101,6 +101,10 @@ impl Sticker {
         from.require_auth();
         require_valid(sticker_type, amount);
 
+        if from == to {
+            panic!("sticker: cannot transfer to self");
+        }
+
         let from_bal = Self::balance(e, from.clone(), sticker_type);
         if from_bal < amount {
             panic!("sticker: insufficient balance");
@@ -122,6 +126,10 @@ impl Sticker {
         Self::admin(e).require_auth();
         e.storage().instance().set(&DataKey::Burner, &new_burner);
         common::extend_instance(e);
+    }
+
+    pub fn upgrade(e: &Env, new_wasm_hash: BytesN<32>) {
+        common::upgrade(e, &Self::admin(e), new_wasm_hash);
     }
 }
 

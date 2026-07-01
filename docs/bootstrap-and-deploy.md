@@ -74,9 +74,41 @@ deploy Escrow(sticker_addr)
 
 **Capture every deployed contract ID** as you go — later steps reference them.
 
+### Caatinga deploy (recommended)
+
+The full project is orchestrated by [Caatinga](https://github.com/caatinga-dev/caatinga) via `caatinga.config.ts` at the repository root. One command builds the workspace, deploys all seven contracts in dependency order, runs the four authority wiring invokes, generates TypeScript bindings, and writes `frontend/.env.local`:
+
+```bash
+# prerequisites: Node 22+, Rust, Stellar CLI, wasm32v1-none
+npm install
+caatinga setup --source deployer --network testnet   # first time only
+make bootstrap                                       # runs: caatinga deploy --source deployer --network testnet
+cd frontend && npm install && npm run dev
+```
+
+When deploying the **full contract graph** (no contract name argument), `caatinga deploy` automatically:
+- Runs configured `postDeploy` wiring hooks (via `caatinga wire`)
+- Generates TypeScript bindings
+- Writes `frontend.envFile` (via `caatinga sync-env`)
+
+Granular commands when you need them:
+
+```bash
+caatinga build
+caatinga deploy --source deployer --network testnet
+caatinga wire --source deployer --network testnet      # re-run wiring if skipped with --no-wire
+caatinga generate --network testnet                   # regenerate bindings if needed
+caatinga sync-env --network testnet                    # rewrite env file if needed
+caatinga status --network testnet
+```
+
+Deploy args and `postDeploy` wiring live in `caatinga.config.ts` — the same steps that used to be in `bootstrap.sh`, now versioned as config instead of shell.
+
 ### Use a commented bootstrap script
 
-Put all of this in a `bootstrap.sh` (or a Makefile) with the `stellar contract invoke` calls in the correct order, **commented line by line**. We deliberately prefer a script over an on-chain bootstrap contract because the script *shows the student every step* — and the wiring is exactly the cross-contract content the course teaches.
+Put all of this in `caatinga.config.ts` (`postDeploy` hooks) or, for teaching, a commented shell script with the `stellar contract invoke` calls in the correct order. We deliberately prefer visible wiring steps over an on-chain bootstrap contract because the script *shows the student every step* — and the wiring is exactly the cross-contract content the course teaches.
+
+`bootstrap.sh` is deprecated; use `make bootstrap` or `caatinga deploy --source deployer --network testnet`.
 
 This is the #1 place students hit `auth error` / `unreachable`. The integration-test crate should exercise each authority edge early so a missing `set_minter` fails in CI, not in a live class.
 

@@ -24,7 +24,7 @@ wasm:
 
 # Deploy + wire all 7 contracts on testnet and emit frontend/.env.local.
 bootstrap:
-	./bootstrap.sh
+	caatinga deploy --source deployer --network testnet
 
 # Upgrade ONE contract in place (state-preserving; keeps its id + .env.local).
 # Usage: make upgrade CONTRACT=sticker

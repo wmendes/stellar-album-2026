@@ -15,17 +15,28 @@ That single path demonstrates the whole [fungibility spectrum](fungibility-spect
 - **`@stellar/stellar-sdk`** — the engine under the bindings (simulate / sign / send / poll).
 - **Wallet** — `@creit.tech/stellar-wallets-kit` with all no-config browser wallets enabled (`allowAllModules()`: Freighter, xBull, Lobstr, Albedo, Rabet, Hana, …). The selected wallet id is persisted to `localStorage` and silently restored on load, so a page refresh keeps the session (no keys are stored).
 
-## Testnet deployment (`bootstrap.sh` → `make bootstrap`)
+## Testnet deployment (`caatinga deploy` → `make bootstrap`)
 
-Contracts have circular address deps, so deploy first, then wire authority edges:
+Contracts have circular address deps, so deploy first, then wire authority edges. Caatinga orchestrates the full flow from `caatinga.config.ts`:
+
+```bash
+make bootstrap   # caatinga deploy --source deployer --network testnet
+```
+
+When deploying the **full contract graph** (no contract name argument), `caatinga deploy` automatically:
+- Runs configured `postDeploy` wiring hooks (via `caatinga wire`)
+- Generates TypeScript bindings
+- Writes `frontend.envFile` (via `caatinga sync-env`)
+
+Steps performed:
 
 1. **Keys** — generate + friendbot-fund a `deployer` (admin/treasury for all contracts).
 2. **Build** — `stellar contract build` → wasms in `target/wasm32v1-none/release/`.
 3. **Deploy (7)** — `stellar contract deploy` each, passing constructor args (admin, and any already-deployed addresses), capturing each contract ID.
-4. **Wire (4 edges)** — admin-signed `set_minter`/`set_burner`:
+4. **Wire (4 edges)** — admin-signed `set_minter`/`set_burner` (via `postDeploy` hooks):
    - `coin.set_minter(faucet)` · `pack.set_minter(store)` · `sticker.set_minter(pack)` · `sticker.set_burner(album)`
    - Escrow needs no role — sticker↔sticker custody uses `transfer` with the owner's auth.
-5. **Emit config** — write `frontend/.env.local` with the 7 IDs + network:
+5. **Emit config** — write `frontend/.env.local` with the 7 IDs + network (via `sync-env`):
    ```
    VITE_COIN=… VITE_FAUCET=… VITE_STICKER=… VITE_PACK=… VITE_ALBUM=… VITE_STORE=… VITE_ESCROW=…
    VITE_RPC_URL=https://soroban-testnet.stellar.org

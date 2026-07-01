@@ -35,7 +35,9 @@ function friendlyError(e: unknown): string {
   if (/(declin|reject|denied|cancel|user.*close)/.test(m)) return "You cancelled the request in your wallet.";
   if (/(no wallet|not found|no module|not installed|install)/.test(m)) return "No Stellar wallet found. Install Freighter (or another) to continue.";
   if (/(not enough|insufficient|balance)/.test(m)) return "You don't have enough for that.";
-  if (/(network|timeout|timed out|fetch|rpc|connection)/.test(m)) return "Network hiccup — please try again.";
+  if (/(timeout|timed out|abort)/.test(m)) return "Wallet took too long — please try again.";
+  if (/(fetch|network|connection|econnrefused|econnreset|enotfound)/.test(m)) return "Network issue — retrying…";
+  if (/(rpc|horizon|status 5\d\d)/.test(m)) return "Stellar node is busy — retrying…";
   if (/(revert|status=|failed|trap|panic)/.test(m)) return "That transaction didn't go through. Please try again.";
   return raw;
 }
@@ -66,6 +68,7 @@ export interface Store {
   /** True while an open() is in flight, before the reveal data lands. */
   opening: boolean;
   packBought: boolean;
+  retryFn?: () => void;
   connect(): Promise<void>;
   disconnect(): void;
   clearError(): void;
@@ -105,6 +108,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [reveal, setReveal] = useState<RevealState>();
   const [opening, setOpening] = useState(false);
   const [packBought, setPackBought] = useState(false);
+  const [retryFn, setRetryFn] = useState<(() => Promise<void>) | undefined>();
 
   async function refresh(c: Clients, addr: string): Promise<number[]> {
     const [coinR, packR, lastR, cdR, hasAlbumR] = await Promise.all([
@@ -133,10 +137,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!clients || !address) return undefined;
     setBusy(label);
     setError(undefined);
+    setRetryFn(undefined);
     try {
-      return await fn(clients, address);
+      const result = await fn(clients, address);
+      setRetryFn(undefined);
+      return result;
     } catch (e) {
       setError(friendlyError(e));
+      // Store a retry callback so the Toast can offer a manual retry.
+      // Manual retry is safe — the user explicitly chose to re-attempt.
+      const capturedFn = fn;
+      setRetryFn(() => () => run(label, capturedFn).then(() => undefined));
       return undefined;
     } finally {
       setBusy(undefined);
@@ -146,6 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const connect = async () => {
     setBusy("Connecting");
     setError(undefined);
+    setRetryFn(undefined);
     try {
       const addr = await walletConnect();
       await ensureFunded(addr);
@@ -174,6 +186,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setError(undefined);
     setReveal(undefined);
     setOpening(false);
+    setRetryFn(undefined);
   };
 
   // On load, silently re-establish a previously-connected wallet session so a
@@ -209,6 +222,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const claim = () => sendThen("Claiming coins", (c, addr) => c.faucet.claim({ claimer: addr }));
   const buy = async () => {
+    // Client-side pre-check (issue #14): surface a clear message instead of the
+    // token contract's opaque panic when the buyer can't afford a pack.
+    if (coin < 100) {
+      setError("Not enough coins — claim some first!");
+      return;
+    }
     await sendThen("Buying a pack", (c, addr) => c.store.buy_pack({ buyer: addr }));
     setPackBought(true);
   };
@@ -270,7 +289,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
 
   const value: Store = {
-    address, coin, packs, collection, pasted, offers, hasAlbum, claimAt, busy, error, reveal, opening, packBought,
+    address, coin, packs, collection, pasted, offers, hasAlbum, claimAt, busy, error, reveal, opening, packBought, retryFn,
     connect, disconnect, clearError: () => setError(undefined), claim, buy, open, dismissReveal, dismissPackBought, openAlbum, paste, createOffer, acceptOffer, cancelOffer, reloadOffers,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

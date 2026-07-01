@@ -85,7 +85,7 @@ export function CounterButton({ title, sub, onClick, disabled }: { title: string
 
 // Pinned to the bottom of the viewport so feedback is always visible, even when
 // the action that triggered it is scrolled off-screen.
-export function Toast({ busy, error, onDismiss }: { busy?: string; error?: string; onDismiss?: () => void }) {
+export function Toast({ busy, error, onDismiss, onRetry }: { busy?: string; error?: string; onDismiss?: () => void; onRetry?: () => void }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[55] flex justify-center px-4">
       <AnimatePresence>
@@ -113,6 +113,11 @@ export function Toast({ busy, error, onDismiss }: { busy?: string; error?: strin
             transition={{ duration: 0.2, ease: PAGE_EASE }}
           >
             <span className="flex-1">{error}</span>
+            {onRetry && (
+              <button onClick={onRetry} className="shrink-0 rounded-full bg-leaf-deep px-3 py-1 text-xs font-bold text-paper transition hover:bg-leaf focus-visible:outline-2 focus-visible:outline-leaf">
+                Retry
+              </button>
+            )}
             {onDismiss && (
               <button onClick={onDismiss} aria-label="Dismiss" className="shrink-0 rounded-full px-1 text-ink-soft transition hover:text-ink focus-visible:outline-2 focus-visible:outline-leaf">
                 ✕

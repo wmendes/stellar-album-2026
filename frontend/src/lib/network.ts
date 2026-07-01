@@ -12,3 +12,9 @@ export const CONTRACTS = {
 
 export const RPC_URL = import.meta.env.VITE_RPC_URL as string;
 export const NETWORK_PASSPHRASE = import.meta.env.VITE_NETWORK_PASSPHRASE as string;
+
+/** Fallback RPC endpoints tried in order when the primary fails. */
+export const FALLBACK_RPC_URLS: string[] = [
+  "https://soroban-testnet.stellar.org",
+  "https://soroban-testnet.stellar.org:443",
+];

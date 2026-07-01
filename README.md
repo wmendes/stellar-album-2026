@@ -63,8 +63,24 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 
 ## Quick start
 
+**Run the full dApp on testnet** (all 7 contracts + frontend):
+
 ```bash
-# scaffold the workspace + first contract (Class 1)
+npm install
+caatinga setup --source deployer --network testnet   # first time only
+make bootstrap
+cd frontend && npm install && npm run dev
+```
+
+The `make bootstrap` command runs `caatinga deploy --source deployer --network testnet`, which:
+- Deploys all 7 contracts in dependency order
+- Runs `postDeploy` wiring hooks automatically (via `caatinga wire`)
+- Generates TypeScript bindings automatically
+- Writes `frontend/.env.local` automatically (via `caatinga sync-env`)
+
+**Scaffold from scratch** (Class 1):
+
+```bash
 stellar contract init stellar-album --name coin
 ```
 

@@ -41,6 +41,10 @@ export async function connect(): Promise<string> {
   });
 }
 
+// Deduplicate concurrent restore() calls so React StrictMode's double-effect
+// invocation doesn't trigger two wallet popups.
+let restoreInFlight: Promise<string | null> | null = null;
+
 /**
  * Silently restore a previously-connected wallet on page load. Returns the
  * address, or `null` if there's no saved session or it can't be restored (e.g.
@@ -48,15 +52,23 @@ export async function connect(): Promise<string> {
  * caller just shows the connect screen.
  */
 export async function restore(): Promise<string | null> {
-  const id = localStorage.getItem(WALLET_KEY);
-  if (!id) return null;
-  try {
-    kit.setWallet(id);
-    const { address } = await kit.getAddress();
-    return address || null;
-  } catch {
-    return null;
-  }
+  if (restoreInFlight) return restoreInFlight;
+
+  restoreInFlight = (async () => {
+    const id = localStorage.getItem(WALLET_KEY);
+    if (!id) return null;
+    try {
+      kit.setWallet(id);
+      const { address } = await kit.getAddress();
+      return address || null;
+    } catch {
+      return null;
+    } finally {
+      restoreInFlight = null;
+    }
+  })();
+
+  return restoreInFlight;
 }
 
 /** Forget the saved session (sign out). */

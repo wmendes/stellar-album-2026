@@ -65,6 +65,7 @@ export interface Store {
   reveal?: RevealState;
   /** True while an open() is in flight, before the reveal data lands. */
   opening: boolean;
+  packBought: boolean;
   connect(): Promise<void>;
   disconnect(): void;
   clearError(): void;
@@ -72,6 +73,7 @@ export interface Store {
   buy(): Promise<void>;
   open(): Promise<void>;
   dismissReveal(): void;
+  dismissPackBought(): void;
   openAlbum(): Promise<void>;
   paste(t: number): Promise<boolean>;
   createOffer(give: number, want: number): Promise<string | undefined>;
@@ -102,6 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string>();
   const [reveal, setReveal] = useState<RevealState>();
   const [opening, setOpening] = useState(false);
+  const [packBought, setPackBought] = useState(false);
 
   async function refresh(c: Clients, addr: string): Promise<number[]> {
     const [coinR, packR, lastR, cdR, hasAlbumR] = await Promise.all([
@@ -205,7 +208,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }).then(() => undefined);
 
   const claim = () => sendThen("Claiming coins", (c, addr) => c.faucet.claim({ claimer: addr }));
-  const buy = () => sendThen("Buying a pack", (c, addr) => c.store.buy_pack({ buyer: addr }));
+  const buy = async () => {
+    await sendThen("Buying a pack", (c, addr) => c.store.buy_pack({ buyer: addr }));
+    setPackBought(true);
+  };
+  const dismissPackBought = () => setPackBought(false);
   const openAlbum = () => sendThen("Binding album", (c, addr) => c.album.open_album({ owner: addr }));
   const paste = (t: number) =>
     run("Pasting", async (c, addr) => {
@@ -263,8 +270,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
 
   const value: Store = {
-    address, coin, packs, collection, pasted, offers, hasAlbum, claimAt, busy, error, reveal, opening,
-    connect, disconnect, clearError: () => setError(undefined), claim, buy, open, dismissReveal, openAlbum, paste, createOffer, acceptOffer, cancelOffer, reloadOffers,
+    address, coin, packs, collection, pasted, offers, hasAlbum, claimAt, busy, error, reveal, opening, packBought,
+    connect, disconnect, clearError: () => setError(undefined), claim, buy, open, dismissReveal, dismissPackBought, openAlbum, paste, createOffer, acceptOffer, cancelOffer, reloadOffers,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
